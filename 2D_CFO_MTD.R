@@ -201,18 +201,18 @@ make.decision.2dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
 }
   
   
-  overdose.fn <- function(phi, add.args=list()){
-    y <- add.args$y
-    n <- add.args$n
-    alp.prior <- add.args$alp.prior
-    bet.prior <- add.args$bet.prior
-    pp <- post.prob.fn(phi, y, n, alp.prior, bet.prior)
-    if ((pp >= 0.95) & (add.args$n>=3)){
-      return(TRUE)
-    }else{
-      return(FALSE)
-    }
+overdose.fn <- function(phi, add.args=list()){
+  y <- add.args$y
+  n <- add.args$n
+  alp.prior <- add.args$alp.prior
+  bet.prior <- add.args$bet.prior
+  pp <- post.prob.fn(phi, y, n, alp.prior, bet.prior)
+  if ((pp >= 0.95) & (add.args$n>=3)){
+    return(TRUE)
+  }else{
+    return(FALSE)
   }
+}
 
 # Simulation function for CFO
 CFO.simu.fn <- function(phi, p.true, ncohort=12, init.level=1, 
