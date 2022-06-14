@@ -192,8 +192,8 @@ make.decision.1dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
 
 
 make.decision.2dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.doses, diag=FALSE){
-  
-  
+  decision.h <- make.decision.1dCFO.fn(phi, cys[2,], cns[2,], alp.prior, bet.prior, cover.doses[2,], diag=FALSE)
+  decision.v <- make.decision.1dCFO.fn(phi, cys[,2], cns[,2], alp.prior, bet.prior, cover.doses[,2], diag=FALSE)
   
   
   
@@ -215,7 +215,7 @@ overdose.fn <- function(phi, add.args=list()){
 }
 
 # Simulation function for CFO
-CFO.simu.fn <- function(phi, p.true, ncohort=12, init.level=1, 
+CFO.simu.fn <- function(phi, p.true, ncohort=12, init.level.A=1, init.level.B=1,
                         cohortsize=1, add.args=list()){
   # phi: Target DIL rate
   # p.true: True DIL rates under the different dose levels
@@ -223,61 +223,70 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, init.level=1,
   # cohortsize: The sample size in each cohort
   # alp.prior, bet.prior: prior parameters
   earlystop <- 0
-  ndose <- length(p.true)
-  cidx <- init.level
+  ndose.A <- length(a[,1])
+  ndose.B <- length(a[1,])
+  cidx.A <- init.level.A
+  cidx.B <- init.level.B
   
-  tys <- rep(0, ndose) # number of responses for different doses.
-  tns <- rep(0, ndose) # number of subject for different doses.
-  tover.doses <- rep(0, ndose) # Whether each dose is overdosed or not, 1 yes
+  tys <- matrix(0, ndose.A, ndose.B) # number of responses for different doses.
+  tns <- matrix(0, ndose.A, ndose.B) # number of subject for different doses.
+  tover.doses <- matrix(0, ndose.A, ndose.B) # Whether each dose is overdosed or not, 1 yes
   
   
   
   
   for (i in 1:ncohort){
-    pc <- p.true[cidx] 
+    pc <- p.true[cidx.A, cidx.B] 
     
     # sample from current dose
     cres <- rbinom(cohortsize, 1, pc)
     
     # update results
-    tys[cidx] <- tys[cidx] + sum(cres)
-    tns[cidx] <- tns[cidx] + cohortsize
+    tys[cidx.A, cidx.B] <- tys[cidx.A, cidx.B] + sum(cres)
+    tns[cidx.A, cidx.B] <- tns[cidx.A, cidx.B] + cohortsize
     
     
     
-    cy <- tys[cidx]
-    cn <- tns[cidx]
+    cy <- tys[cidx.A, cidx.B]
+    cn <- tns[cidx.A, cidx.B]
     
-    add.args <- c(list(y=cy, n=cn, tys=tys, tns=tns, cidx=cidx), add.args)
+    add.args <- c(list(y=cy, n=cn, tys=tys, tns=tns, cidx.A=cidx.A, cidx.B=cidx.B), add.args)
     
     if (overdose.fn(phi, add.args)){
-      tover.doses[cidx:ndose] <- 1
+      tover.doses[cidx.A:ndose.A, cidx.B:ndose.B] <- 1
     }
     
-    if (tover.doses[1] == 1){
+    if (tover.doses[1,1] == 1){
       earlystop <- 1
       break()
     }
     
     
     # the results for current 3 dose levels
-    if (cidx!=1){
-      cys <- tys[(cidx-1):(cidx+1)]
-      cns <- tns[(cidx-1):(cidx+1)]
-      cover.doses <- tover.doses[(cidx-1):(cidx+1)]
-      #cover.doses <- c(0, 0, 0) # No elimination rule
-    }else{
-      cys <- c(NA, tys[1:(cidx+1)])
-      cns <- c(NA, tns[1:(cidx+1)])
-      cover.doses <- c(NA, tover.doses[1:(cidx+1)])
-      #cover.doses <- c(NA, 0, 0) # No elimination rule
+    if ((cidx.A!=1) & (cidx.B!=1)){
+      cys <- tys[(cidx.A-1):(cidx.A+1), (cidx.B-1):(cidx.B+1)]
+      cns <- tns[(cidx.A-1):(cidx.A+1), (cidx.B-1):(cidx.B+1)]
+      cover.doses <- tover.doses[(cidx.A-1):(cidx.A+1), (cidx.B-1):(cidx.B+1)]
+    } else if ((cidx.A=1) & (cidx.B!=1)){
+      cys <- rbind(c(NA,NA,NA), tys[1:2, (cidx.B-1):(cidx.B+1)])
+      cns <- rbind(c(NA,NA,NA), tns[1:2, (cidx.B-1):(cidx.B+1)])
+      cover.doses <- rbind(c(NA,NA,NA), tover.doses[1:2, (cidx.B-1):(cidx.B+1)])
+    } else if ((cidx.A!=1) & (cidx.B=1)){
+      cys <- cbind(c(NA,NA,NA), tys[(cidx.A-1):(cidx.A+1), 1:2])
+      cns <- cbind(c(NA,NA,NA), tns[(cidx.A-1):(cidx.A+1), 1:2])
+      cover.doses <- cbind(c(NA,NA,NA), tover.doses[(cidx.A-1):(cidx.A+1), 1:2])
+    } else {
+      cys <- cbind(c(NA,NA,NA), rbind(c(NA,NA), tys[1:2,1:2]))
+      cns <- cbind(c(NA,NA,NA), rbind(c(NA,NA), tns[1:2,1:2]))
+      cover.doses <- cbind(c(NA,NA,NA), rbind(c(NA,NA), tover.doses[1:2,1:2]))
     }
     
+    ###############
     idx.chg <- make.decision.1dCFO.fn(phi, cys, cns, add.args$alp.prior, add.args$bet.prior, cover.doses) - 2
     
     
     cidx <- idx.chg + cidx
-    
+    ###########
   }
   
   
