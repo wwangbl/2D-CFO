@@ -4,7 +4,8 @@ source("2D_CFO_MTD.R")
 target <- 0.33
 ncohort <- 10
 cohortsize <- 3
-init.level <- 1
+init.level.A <- 1
+init.level.B <- 1
 
 add.args <- list(alp.prior=target, bet.prior=1-target)
 p.trues <- list()

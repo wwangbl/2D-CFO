@@ -192,12 +192,51 @@ make.decision.1dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
 
 
 make.decision.2dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.doses, diag=FALSE){
-  decision.h <- make.decision.1dCFO.fn(phi, cys[2,], cns[2,], alp.prior, bet.prior, cover.doses[2,], diag=FALSE)
-  decision.v <- make.decision.1dCFO.fn(phi, cys[,2], cns[,2], alp.prior, bet.prior, cover.doses[,2], diag=FALSE)
+  cidx.A <- 0
+  cidx.B <- 0
+  idx.chg.A <- make.decision.1dCFO.fn(phi, cys[2,], cns[2,], alp.prior, bet.prior, cover.doses[2,]) - 2
+  idx.chg.B <- make.decision.1dCFO.fn(phi, cys[,2], cns[,2], alp.prior, bet.prior, cover.doses[,2]) - 2
   
+  if (idx.chg.A == 1 & idx.chg.B == 1){
+    OR.R <- OR.values(phi, cys[2,2], cns[2,2], cys[2,3], cns[2,3], alp.prior, bet.prior, type="R")
+    OR.U <- OR.values(phi, cys[2,2], cns[2,2], cys[3,2], cns[3,2], alp.prior, bet.prior, type="U")
+    if (OR.R > OR.U){
+      cidx.A <- idx.chg.A + cidx.A
+    } else {
+      cidx.B <- idx.chg.B + cidx.B
+    }
+  } else if (idx.chg.A == -1 & idx.chg.B == -1){
+    OR.L <- OR.values(phi, cys[2,2], cns[2,2], cys[2,1], cns[2,1], alp.prior, bet.prior, type="L")
+    OR.D <- OR.values(phi, cys[2,2], cns[2,2], cys[1,2], cns[1,2], alp.prior, bet.prior, type="D")
+    if (OR.L > OR.D){
+      cidx.A <- idx.chg.A + cidx.A
+    } else {
+      cidx.B <- idx.chg.B + cidx.B
+    }
+  } else if (idx.chg.A == 1 & idx.chg.B == -1){
+    
+    DCR <- make.decision.1dCFO.fn(phi, c(cys[1,2],cys[2,2],cys[2,3]), c(cns[1,2],cns[2,2],cns[2,3]), alp.prior, 
+                                  bet.prior, c(cover.doses[1,2],cover.doses[2,2],cover.doses[2,3])) - 2
+    if (DCR == 1){
+      cidx.A <- idx.chg.A + cidx.A
+    } else if (DCR == -1){
+      cidx.B <- idx.chg.B + cidx.B
+    }
+  } else if (idx.chg.A == -1 & idx.chg.B == 1){
+    LCU <- make.decision.1dCFO.fn(phi, c(cys[2,1],cys[2,2],cys[3,2]), c(cns[2,1],cns[2,2],cns[3,2]), alp.prior, 
+                                  bet.prior, c(cover.doses[2,1],cover.doses[2,2],cover.doses[3,2])) - 2
+    if (LCU == 1){
+      cidx.B <- idx.chg.B + cidx.B
+    } else if (DCR == -1){
+      cidx.A <- idx.chg.A + cidx.A
+    }
+  } else {
+    cidx.A <- idx.chg.A + cidx.A
+    cidx.B <- idx.chg.B + cidx.B
+  }
   
-  
-  
+  return (c(cidx.A, cidx.B))
+
 }
   
   
@@ -282,19 +321,21 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, init.level.A=1, init.level.B=1,
     }
     
     ###############
-    idx.chg <- make.decision.1dCFO.fn(phi, cys, cns, add.args$alp.prior, add.args$bet.prior, cover.doses) - 2
-    
-    
-    cidx <- idx.chg + cidx
+    idx.chg <- make.decision.2dCFO.fn(phi, cys, cns, add.args$alp.prior, add.args$bet.prior, cover.doses)
+    cidx.A <- cidx.A + idx.chg[1]
+    cidx.B <- cidx.B + idx.chg[2]
     ###########
   }
   
   
   if (earlystop==0){
-    MTD <- select.mtd(phi, tns, tys)$MTD
+    MTD <- select.mtd.comb(phi, tns, tys)$MTD
   }else{
-    MTD <- 99
+    MTD <- c(99,99)
   }
   list(MTD=MTD, dose.ns=tns, DLT.ns=tys, p.true=p.true, target=phi, over.doses=tover.doses)
 }
+
+
+
 
