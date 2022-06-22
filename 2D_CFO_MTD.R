@@ -198,16 +198,22 @@ make.decision.2dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
   idx.chg.B <- make.decision.1dCFO.fn(phi, cys[,2], cns[,2], alp.prior, bet.prior, cover.doses[,2]) - 2
   
   if (idx.chg.A == 1 & idx.chg.B == 1){
+    ### horizontal and vertical only
     OR.R <- OR.values(phi, cys[2,2], cns[2,2], cys[2,3], cns[2,3], alp.prior, bet.prior, type="R")
-    OR.U <- OR.values(phi, cys[2,2], cns[2,2], cys[3,2], cns[3,2], alp.prior, bet.prior, type="U")
+    OR.U <- OR.values(phi, cys[2,2], cns[2,2], cys[3,2], cns[3,2], alp.prior, bet.prior, type="R")
     if (OR.R > OR.U){
       cidx.A <- idx.chg.A + cidx.A
     } else {
       cidx.B <- idx.chg.B + cidx.B
     }
+    
+    ### diagonal direction
+    # cidx.A <- idx.chg.A + 1
+    # cidx.B <- idx.chg.B + 1
+    
   } else if (idx.chg.A == -1 & idx.chg.B == -1){
     OR.L <- OR.values(phi, cys[2,2], cns[2,2], cys[2,1], cns[2,1], alp.prior, bet.prior, type="L")
-    OR.D <- OR.values(phi, cys[2,2], cns[2,2], cys[1,2], cns[1,2], alp.prior, bet.prior, type="D")
+    OR.D <- OR.values(phi, cys[2,2], cns[2,2], cys[1,2], cns[1,2], alp.prior, bet.prior, type="L")
     if (OR.L > OR.D){
       cidx.A <- idx.chg.A + cidx.A
     } else {
@@ -262,8 +268,8 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, init.level.A=1, init.level.B=1,
   # cohortsize: The sample size in each cohort
   # alp.prior, bet.prior: prior parameters
   earlystop <- 0
-  ndose.A <- length(a[,1])
-  ndose.B <- length(a[1,])
+  ndose.A <- length(p.true[,1])
+  ndose.B <- length(p.true[1,])
   cidx.A <- init.level.A
   cidx.B <- init.level.B
   
@@ -300,30 +306,54 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, init.level.A=1, init.level.B=1,
       break()
     }
     
-    
-    # the results for current 3 dose levels
-    if ((cidx.A!=1) & (cidx.B!=1)){
+    if (cidx.A!=1 & cidx.B!=1 & cidx.A!=ndose.A & cidx.B!=ndose.B){
+      # no boundary
       cys <- tys[(cidx.A-1):(cidx.A+1), (cidx.B-1):(cidx.B+1)]
       cns <- tns[(cidx.A-1):(cidx.A+1), (cidx.B-1):(cidx.B+1)]
       cover.doses <- tover.doses[(cidx.A-1):(cidx.A+1), (cidx.B-1):(cidx.B+1)]
-    } else if ((cidx.A=1) & (cidx.B!=1)){
+    } else if (cidx.A==1 & cidx.B==1){
+      # (1, 1)
+      cys <- rbind(c(NA,NA,NA),cbind(c(NA,NA),tys[1:2,1:2]))
+      cns <- rbind(c(NA,NA,NA),cbind(c(NA,NA),tns[1:2,1:2]))
+      cover.doses <- rbind(c(NA,NA,NA),cbind(c(NA,NA),tover.doses[1:2,1:2]))
+    } else if (cidx.A==ndose.A & cidx.B==ndose.B){
+      # (nA, nB)
+      cys <- rbind(cbind(tys[(cidx.A-1):cidx.A,(cidx.B-1):cidx.B],c(NA,NA)), c(NA,NA,NA))
+      cns <- rbind(cbind(tns[(cidx.A-1):cidx.A,(cidx.B-1):cidx.B],c(NA,NA)), c(NA,NA,NA))
+      cover.doses <- rbind(cbind(tover.doses[(cidx.A-1):cidx.A,(cidx.B-1):cidx.B],c(NA,NA)), c(NA,NA,NA))
+    } else if (cidx.A==1 & cidx.B==ndose.B){
+      # (1, nB) 
+      cys <- rbind(c(NA,NA,NA),cbind(tys[1:2,(cidx.B-1):cidx.B],c(NA,NA)))
+      cns <- rbind(c(NA,NA,NA),cbind(tns[1:2,(cidx.B-1):cidx.B],c(NA,NA)))
+      cover.doses <- rbind(c(NA,NA,NA),cbind(tover.doses[1:2,(cidx.B-1):cidx.B],c(NA,NA)))
+    } else if (cidx.A==ndose.A & cidx.B==1){
+      # (nA, 1) 
+      cys <- rbind(cbind(c(NA,NA), tys[(cidx.A-1):cidx.A,1:2]),c(NA,NA,NA))
+      cns <- rbind(cbind(c(NA,NA), tns[(cidx.A-1):cidx.A,1:2]),c(NA,NA,NA))
+      cover.doses <- rbind(cbind(c(NA,NA), tover.doses[(cidx.A-1):cidx.A,1:2]),c(NA,NA,NA))
+    } else if (cidx.A==1 & cidx.B!=1){
+      # (1, 2:(nB-1))
       cys <- rbind(c(NA,NA,NA), tys[1:2, (cidx.B-1):(cidx.B+1)])
       cns <- rbind(c(NA,NA,NA), tns[1:2, (cidx.B-1):(cidx.B+1)])
       cover.doses <- rbind(c(NA,NA,NA), tover.doses[1:2, (cidx.B-1):(cidx.B+1)])
-    } else if ((cidx.A!=1) & (cidx.B=1)){
+    } else if (cidx.A!=1 & cidx.B==1){
+      # (2:(nA-1), 1)
       cys <- cbind(c(NA,NA,NA), tys[(cidx.A-1):(cidx.A+1), 1:2])
       cns <- cbind(c(NA,NA,NA), tns[(cidx.A-1):(cidx.A+1), 1:2])
       cover.doses <- cbind(c(NA,NA,NA), tover.doses[(cidx.A-1):(cidx.A+1), 1:2])
-    } else {
-      cys <- cbind(c(NA,NA,NA), rbind(c(NA,NA), tys[1:2,1:2]))
-      cns <- cbind(c(NA,NA,NA), rbind(c(NA,NA), tns[1:2,1:2]))
-      cover.doses <- cbind(c(NA,NA,NA), rbind(c(NA,NA), tover.doses[1:2,1:2]))
     }
     
     ###############
     idx.chg <- make.decision.2dCFO.fn(phi, cys, cns, add.args$alp.prior, add.args$bet.prior, cover.doses)
     cidx.A <- cidx.A + idx.chg[1]
     cidx.B <- cidx.B + idx.chg[2]
+    
+    if (cidx.A > ndose.A){
+      cidx.A <- cidx.A - 1
+    }
+    if (cidx.B > ndose.B){
+      cidx.B <- cidx.B - 1
+    }
     ###########
   }
   
@@ -335,7 +365,6 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, init.level.A=1, init.level.B=1,
   }
   list(MTD=MTD, dose.ns=tns, DLT.ns=tys, p.true=p.true, target=phi, over.doses=tover.doses)
 }
-
 
 
 
