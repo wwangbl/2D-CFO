@@ -199,46 +199,46 @@ make.decision.2dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
   
   if (idx.chg.A == 1 & idx.chg.B == 1){
     ### horizontal and vertical only
-    OR.R <- OR.values(phi, cys[2,2], cns[2,2], cys[2,3], cns[2,3], alp.prior, bet.prior, type="R")
-    OR.U <- OR.values(phi, cys[2,2], cns[2,2], cys[3,2], cns[3,2], alp.prior, bet.prior, type="R")
-    if (OR.R > OR.U){
-      cidx.A <- idx.chg.A + cidx.A
-    } else {
-      cidx.B <- idx.chg.B + cidx.B
-    }
+    # OR.R <- OR.values(phi, cys[2,2], cns[2,2], cys[2,3], cns[2,3], alp.prior, bet.prior, type="R")
+    # OR.U <- OR.values(phi, cys[2,2], cns[2,2], cys[3,2], cns[3,2], alp.prior, bet.prior, type="R")
+    # if (OR.R > OR.U){
+    #   cidx.A <- idx.chg.A
+    # } else {
+    #   cidx.B <- idx.chg.B
+    # }
     
     ### diagonal direction
-    # cidx.A <- idx.chg.A + 1
-    # cidx.B <- idx.chg.B + 1
+    cidx.A <- idx.chg.A
+    cidx.B <- idx.chg.B
     
   } else if (idx.chg.A == -1 & idx.chg.B == -1){
     OR.L <- OR.values(phi, cys[2,2], cns[2,2], cys[2,1], cns[2,1], alp.prior, bet.prior, type="L")
     OR.D <- OR.values(phi, cys[2,2], cns[2,2], cys[1,2], cns[1,2], alp.prior, bet.prior, type="L")
     if (OR.L > OR.D){
-      cidx.A <- idx.chg.A + cidx.A
+      cidx.A <- idx.chg.A
     } else {
-      cidx.B <- idx.chg.B + cidx.B
+      cidx.B <- idx.chg.B
     }
   } else if (idx.chg.A == 1 & idx.chg.B == -1){
     
     DCR <- make.decision.1dCFO.fn(phi, c(cys[1,2],cys[2,2],cys[2,3]), c(cns[1,2],cns[2,2],cns[2,3]), alp.prior, 
                                   bet.prior, c(cover.doses[1,2],cover.doses[2,2],cover.doses[2,3])) - 2
     if (DCR == 1){
-      cidx.A <- idx.chg.A + cidx.A
+      cidx.A <- idx.chg.A
     } else if (DCR == -1){
-      cidx.B <- idx.chg.B + cidx.B
+      cidx.B <- idx.chg.B
     }
   } else if (idx.chg.A == -1 & idx.chg.B == 1){
     LCU <- make.decision.1dCFO.fn(phi, c(cys[2,1],cys[2,2],cys[3,2]), c(cns[2,1],cns[2,2],cns[3,2]), alp.prior, 
                                   bet.prior, c(cover.doses[2,1],cover.doses[2,2],cover.doses[3,2])) - 2
     if (LCU == 1){
-      cidx.B <- idx.chg.B + cidx.B
+      cidx.B <- idx.chg.B
     } else if (DCR == -1){
-      cidx.A <- idx.chg.A + cidx.A
+      cidx.A <- idx.chg.A
     }
   } else {
-    cidx.A <- idx.chg.A + cidx.A
-    cidx.B <- idx.chg.B + cidx.B
+    cidx.A <- idx.chg.A
+    cidx.B <- idx.chg.B
   }
   
   return (c(cidx.A, cidx.B))
