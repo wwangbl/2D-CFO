@@ -157,7 +157,9 @@ make.decision.1dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
       return(2)
     }else  if (is.na(cys[1]) & (!(cover.doses[3]==1))){
       gam2 <- optim.gamma.fn(cns[2], cns[3], phi, "R", alp.prior, bet.prior)$gamma 
+      # message(paste('gam2: ', gam2))
       OR.v2 <- OR.values(phi, cys[2], cns[2], cys[3], cns[3], alp.prior, bet.prior, type="R")
+      # message(paste('OR.v2: ', OR.v2))
       if (OR.v2>gam2){
         return(3)
       }else{
@@ -165,7 +167,9 @@ make.decision.1dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
       }
     }else  if (is.na(cys[3]) | (cover.doses[3]==1)){
       gam1 <- optim.gamma.fn(cns[1], cns[2], phi, "L", alp.prior, bet.prior)$gamma 
+      # message(paste('gam1: ', gam1))
       OR.v1 <- OR.values(phi, cys[1], cns[1], cys[2], cns[2], alp.prior, bet.prior, type="L")
+      # message(paste('OR.v1: ', OR.v1))
       if (OR.v1>gam1){
         return(1)
       }else{
@@ -175,8 +179,10 @@ make.decision.1dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
     }else  if (!(is.na(cys[1]) | is.na(cys[3]) | cover.doses[3]==1)){
       gam1 <- optim.gamma.fn(cns[1], cns[2], phi, "L", alp.prior, bet.prior)$gamma 
       gam2 <- optim.gamma.fn(cns[2], cns[3], phi, "R", alp.prior, bet.prior)$gamma 
+      # message(paste('gam1,gam2: ',gam1,gam2))
       OR.v1 <- OR.values(phi, cys[1], cns[1], cys[2], cns[2], alp.prior, bet.prior, type="L")
       OR.v2 <- OR.values(phi, cys[2], cns[2], cys[3], cns[3], alp.prior, bet.prior, type="R")
+      # message(paste('OR.v1,OR.v2: ',OR.v1,OR.v2))
       v1 <- OR.v1 > gam1
       v2 <- OR.v2 > gam2
       if (v1 & !v2){
@@ -194,51 +200,81 @@ make.decision.1dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
 make.decision.2dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.doses, diag=FALSE){
   cidx.A <- 0
   cidx.B <- 0
+  # horizontal direction
   idx.chg.A <- make.decision.1dCFO.fn(phi, cys[2,], cns[2,], alp.prior, bet.prior, cover.doses[2,]) - 2
+  # vertical direction
   idx.chg.B <- make.decision.1dCFO.fn(phi, cys[,2], cns[,2], alp.prior, bet.prior, cover.doses[,2]) - 2
+  
+  # message(paste('decision A: ',idx.chg.A))
+  # message(paste('decision B: ',idx.chg.B))
   
   if (idx.chg.A == 1 & idx.chg.B == 1){
     ### horizontal and vertical only
-    # OR.R <- OR.values(phi, cys[2,2], cns[2,2], cys[2,3], cns[2,3], alp.prior, bet.prior, type="R")
-    # OR.U <- OR.values(phi, cys[2,2], cns[2,2], cys[3,2], cns[3,2], alp.prior, bet.prior, type="R")
-    # if (OR.R > OR.U){
-    #   cidx.A <- idx.chg.A
-    # } else {
-    #   cidx.B <- idx.chg.B
-    # }
+    
+    OR.R <- OR.values(phi, cys[2,2], cns[2,2], cys[2,3], cns[2,3], alp.prior, bet.prior, type="R")
+    OR.U <- OR.values(phi, cys[2,2], cns[2,2], cys[3,2], cns[3,2], alp.prior, bet.prior, type="R")
+    
+    # message(paste('OR.R: ',OR.R))
+    # message(paste('OR.U: ',OR.U))
+    
+    if (OR.R == OR.U){
+      rand <- rbinom(1,1,0.5)
+      if(rand == 0){
+        cidx.A <- 1
+      } else {
+        cidx.B <- 1
+      }
+    } else if (OR.R > OR.U){
+      cidx.B <- 1
+    } else {
+      cidx.A <- 1
+    }
     
     ### diagonal direction
-    cidx.A <- idx.chg.A
-    cidx.B <- idx.chg.B
+    # cidx.A <- idx.chg.A
+    # cidx.B <- idx.chg.B
     
   } else if (idx.chg.A == -1 & idx.chg.B == -1){
     OR.L <- OR.values(phi, cys[2,2], cns[2,2], cys[2,1], cns[2,1], alp.prior, bet.prior, type="L")
     OR.D <- OR.values(phi, cys[2,2], cns[2,2], cys[1,2], cns[1,2], alp.prior, bet.prior, type="L")
-    if (OR.L > OR.D){
-      cidx.A <- idx.chg.A
+    if (OR.L == OR.D){
+      rand <- rbinom(1,1,0.5)
+      if(rand == 0){
+        cidx.A <- -1
+      } else {
+        cidx.B <- -1
+      }
+    } else if (OR.L > OR.D){
+      cidx.B <- -1
     } else {
-      cidx.B <- idx.chg.B
+      cidx.A <- -1
     }
   } else if (idx.chg.A == 1 & idx.chg.B == -1){
-    
+    message('rare case occurs')
     DCR <- make.decision.1dCFO.fn(phi, c(cys[1,2],cys[2,2],cys[2,3]), c(cns[1,2],cns[2,2],cns[2,3]), alp.prior, 
                                   bet.prior, c(cover.doses[1,2],cover.doses[2,2],cover.doses[2,3])) - 2
     if (DCR == 1){
-      cidx.A <- idx.chg.A
+      cidx.B <- 1
     } else if (DCR == -1){
-      cidx.B <- idx.chg.B
+      cidx.A <- -1
     }
   } else if (idx.chg.A == -1 & idx.chg.B == 1){
+    message('rare case occurs')
     LCU <- make.decision.1dCFO.fn(phi, c(cys[2,1],cys[2,2],cys[3,2]), c(cns[2,1],cns[2,2],cns[3,2]), alp.prior, 
                                   bet.prior, c(cover.doses[2,1],cover.doses[2,2],cover.doses[3,2])) - 2
     if (LCU == 1){
-      cidx.B <- idx.chg.B
-    } else if (DCR == -1){
-      cidx.A <- idx.chg.A
+      cidx.A <- 1
+    } else if (LCU == -1){
+      cidx.B <- -1
     }
-  } else {
-    cidx.A <- idx.chg.A
-    cidx.B <- idx.chg.B
+  } else if (idx.chg.A == 1 & idx.chg.B == 0){
+    cidx.B <- 1
+  } else if (idx.chg.A == 0 & idx.chg.B == 1){
+    cidx.A <- 1
+  } else if (idx.chg.A == -1 & idx.chg.B == 0){
+    cidx.B <- -1
+  } else if (idx.chg.A == 0 & idx.chg.B == -1){
+    cidx.A <- -1
   }
   
   return (c(cidx.A, cidx.B))
@@ -281,6 +317,9 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, init.level.A=1, init.level.B=1,
   
   
   for (i in 1:ncohort){
+    message(paste(i, '-th step:'))
+    message(paste('cidx (A,B): (', cidx.A, ',', cidx.B, ')'))
+    
     pc <- p.true[cidx.A, cidx.B] 
     
     # sample from current dose
@@ -341,20 +380,29 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, init.level.A=1, init.level.B=1,
       cys <- cbind(c(NA,NA,NA), tys[(cidx.A-1):(cidx.A+1), 1:2])
       cns <- cbind(c(NA,NA,NA), tns[(cidx.A-1):(cidx.A+1), 1:2])
       cover.doses <- cbind(c(NA,NA,NA), tover.doses[(cidx.A-1):(cidx.A+1), 1:2])
+    } else if (cidx.A==ndose.A & cidx.B!=ndose.B){
+      # (nA, 2:(nB-1))
+      cys <- rbind(tys[(ndose.A-1):ndose.A, (cidx.B-1):(cidx.B+1)], c(NA,NA,NA))
+      cns <- rbind(tns[(ndose.A-1):ndose.A, (cidx.B-1):(cidx.B+1)], c(NA,NA,NA))
+      cover.doses <- rbind(tover.doses[(ndose.A-1):ndose.A, (cidx.B-1):(cidx.B+1)], c(NA,NA,NA))
+    } else if (cidx.A!=ndose.A & cidx.B==ndose.B){
+      # (2:(nA-1), nB)
+      cys <- cbind(tys[(cidx.A-1):(cidx.A+1), (cidx.B-1):cidx.B], c(NA,NA,NA))
+      cns <- cbind(tns[(cidx.A-1):(cidx.A+1), (cidx.B-1):cidx.B], c(NA,NA,NA))
+      cover.doses <- cbind(tover.doses[(cidx.A-1):(cidx.A+1), (cidx.B-1):cidx.B], c(NA,NA,NA))
+    } else {
+      message('no such case')
     }
     
-    ###############
+    # message(paste('cys[2,]: ', cys[2,1],cys[2,2],cys[2,3]))
+    # message(paste('cns[2,]: ', cns[2,1],cns[2,2],cns[2,3]))
+    # message(paste('cys[,2]: ', cys[1,2],cys[2,2],cys[3,2]))
+    # message(paste('cns[,2]: ', cns[1,2],cns[2,2],cns[3,2]))
+
     idx.chg <- make.decision.2dCFO.fn(phi, cys, cns, add.args$alp.prior, add.args$bet.prior, cover.doses)
     cidx.A <- cidx.A + idx.chg[1]
     cidx.B <- cidx.B + idx.chg[2]
     
-    if (cidx.A > ndose.A){
-      cidx.A <- cidx.A - 1
-    }
-    if (cidx.B > ndose.B){
-      cidx.B <- cidx.B - 1
-    }
-    ###########
   }
   
   
