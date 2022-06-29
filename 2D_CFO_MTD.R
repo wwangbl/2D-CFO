@@ -16,6 +16,7 @@ prob.int <- function(phi, y1, n1, y2, n2, alp.prior, bet.prior){
   alp2 <- alp.prior + y2
   bet1 <- alp.prior + n1 - y1
   bet2 <- alp.prior + n2 - y2
+  # message(paste('y1,y2,n1,n2: ',y1, n1, y2, n2))
   fn.min <- function(x){
     dbeta(x, alp1, bet1)*(1-pbeta(x, alp2, bet2))
   }
@@ -102,7 +103,9 @@ margin.ys.table <- function(n1, n2, phi, hyperthesis){
 
 # Obtain the optimal gamma for the hypothesis test
 optim.gamma.fn <- function(n1, n2, phi, type, alp.prior, bet.prior){
+  # message('calculating OR table')
   OR.table <- All.OR.table(phi, n1, n2, type, alp.prior, bet.prior) 
+  # message('calculation done')
   ys.table.H0 <- margin.ys.table(n1, n2, phi, "H0")
   ys.table.H1 <- margin.ys.table(n1, n2, phi, "H1")
   
@@ -156,7 +159,7 @@ make.decision.1dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
     if (is.na(cys[1]) & (cover.doses[3]==1)){
       return(2)
     }else  if (is.na(cys[1]) & (!(cover.doses[3]==1))){
-      gam2 <- optim.gamma.fn(cns[2], cns[3], phi, "R", alp.prior, bet.prior)$gamma 
+      gam2 <- optim.gamma.fn(cns[2], cns[3], phi, "R", alp.prior, bet.prior)$gamma
       # message(paste('gam2: ', gam2))
       OR.v2 <- OR.values(phi, cys[2], cns[2], cys[3], cns[3], alp.prior, bet.prior, type="R")
       # message(paste('OR.v2: ', OR.v2))
@@ -166,7 +169,7 @@ make.decision.1dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
         return(2)
       }
     }else  if (is.na(cys[3]) | (cover.doses[3]==1)){
-      gam1 <- optim.gamma.fn(cns[1], cns[2], phi, "L", alp.prior, bet.prior)$gamma 
+      gam1 <- optim.gamma.fn(cns[1], cns[2], phi, "L", alp.prior, bet.prior)$gamma
       # message(paste('gam1: ', gam1))
       OR.v1 <- OR.values(phi, cys[1], cns[1], cys[2], cns[2], alp.prior, bet.prior, type="L")
       # message(paste('OR.v1: ', OR.v1))
@@ -175,10 +178,10 @@ make.decision.1dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
       }else{
         return(2)
       }
-      
+
     }else  if (!(is.na(cys[1]) | is.na(cys[3]) | cover.doses[3]==1)){
-      gam1 <- optim.gamma.fn(cns[1], cns[2], phi, "L", alp.prior, bet.prior)$gamma 
-      gam2 <- optim.gamma.fn(cns[2], cns[3], phi, "R", alp.prior, bet.prior)$gamma 
+      gam1 <- optim.gamma.fn(cns[1], cns[2], phi, "L", alp.prior, bet.prior)$gamma
+      gam2 <- optim.gamma.fn(cns[2], cns[3], phi, "R", alp.prior, bet.prior)$gamma
       # message(paste('gam1,gam2: ',gam1,gam2))
       OR.v1 <- OR.values(phi, cys[1], cns[1], cys[2], cns[2], alp.prior, bet.prior, type="L")
       OR.v2 <- OR.values(phi, cys[2], cns[2], cys[3], cns[3], alp.prior, bet.prior, type="R")
@@ -197,15 +200,21 @@ make.decision.1dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
 }
 
 
+
 make.decision.2dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.doses, diag=FALSE){
   cidx.A <- 0
   cidx.B <- 0
   # horizontal direction
+  # message(paste('cys[2,]: ', cys[2,]))
+  # message(paste('cns[2,]: ', cns[2,]))
   idx.chg.A <- make.decision.1dCFO.fn(phi, cys[2,], cns[2,], alp.prior, bet.prior, cover.doses[2,]) - 2
-  # vertical direction
-  idx.chg.B <- make.decision.1dCFO.fn(phi, cys[,2], cns[,2], alp.prior, bet.prior, cover.doses[,2]) - 2
-  
   # message(paste('decision A: ',idx.chg.A))
+  # vertical direction
+  # message(paste('cys[,2]: ', cys[,2]))
+  # message(paste('cns[,2]: ', cns[,2]))
+  # message(paste('alp, bet: ', alp.prior, bet.prior))
+  # message(paste('cover.doses: ',cover.doses[,2]))
+  idx.chg.B <- make.decision.1dCFO.fn(phi, cys[,2], cns[,2], alp.prior, bet.prior, cover.doses[,2]) - 2
   # message(paste('decision B: ',idx.chg.B))
   
   if (idx.chg.A == 1 & idx.chg.B == 1){
@@ -235,19 +244,28 @@ make.decision.2dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
     # cidx.B <- idx.chg.B
     
   } else if (idx.chg.A == -1 & idx.chg.B == -1){
-    OR.L <- OR.values(phi, cys[2,2], cns[2,2], cys[2,1], cns[2,1], alp.prior, bet.prior, type="L")
-    OR.D <- OR.values(phi, cys[2,2], cns[2,2], cys[1,2], cns[1,2], alp.prior, bet.prior, type="L")
-    if (OR.L == OR.D){
-      rand <- rbinom(1,1,0.5)
-      if(rand == 0){
-        cidx.A <- -1
-      } else {
-        cidx.B <- -1
-      }
-    } else if (OR.L > OR.D){
+    if (is.na(cys[2,1]) & is.na(cys[1,2])){
+      cidx.A <- 0
+      cidx.B <- 0
+    } else if (is.na(cys[2,1])){
+      cidx.A <- -1
+    } else if (is.na(cys[1,2])){
       cidx.B <- -1
     } else {
-      cidx.A <- -1
+      OR.L <- OR.values(phi, cys[2,2], cns[2,2], cys[2,1], cns[2,1], alp.prior, bet.prior, type="L")
+      OR.D <- OR.values(phi, cys[2,2], cns[2,2], cys[1,2], cns[1,2], alp.prior, bet.prior, type="L")
+      if (OR.L == OR.D){
+        rand <- rbinom(1,1,0.5)
+        if(rand == 0){
+          cidx.A <- -1
+        } else {
+          cidx.B <- -1
+        }
+      } else if (OR.L > OR.D){
+        cidx.B <- -1
+      } else {
+        cidx.A <- -1
+      }
     }
   } else if (idx.chg.A == 1 & idx.chg.B == -1){
     message('rare case occurs')
@@ -317,8 +335,8 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, init.level.A=1, init.level.B=1,
   
   
   for (i in 1:ncohort){
-    message(paste(i, '-th step:'))
-    message(paste('cidx (A,B): (', cidx.A, ',', cidx.B, ')'))
+    # message(paste(i, '-th step:'))
+    # message(paste('cidx (A,B): (', cidx.A, ',', cidx.B, ')'))
     
     pc <- p.true[cidx.A, cidx.B] 
     
@@ -402,9 +420,7 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, init.level.A=1, init.level.B=1,
     idx.chg <- make.decision.2dCFO.fn(phi, cys, cns, add.args$alp.prior, add.args$bet.prior, cover.doses)
     cidx.A <- cidx.A + idx.chg[1]
     cidx.B <- cidx.B + idx.chg[2]
-    
   }
-  
   
   if (earlystop==0){
     MTD <- select.mtd.comb(phi, tns, tys)$MTD
