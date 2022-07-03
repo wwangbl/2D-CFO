@@ -40,15 +40,21 @@ p.true.4 <- rbind(p.trues.4[[1]],p.trues.4[[2]],p.trues.4[[3]])
 
 
 
-# res <- CFO.simu.fn(target, p.true.1, ncohort=ncohort, cohortsize=cohortsize, init.level.A, init.level.B, add.args=add.args)
+# res <- CFO.simu.fn(target, p.true.4, ncohort=ncohort, cohortsize=cohortsize, init.level.A, init.level.B, add.args=add.args)
 # res
 
 n.MTD <- 0
 
 for (i in 1:1000){
-  res <- CFO.simu.fn(target, p.true.2, ncohort=ncohort, cohortsize=cohortsize, init.level.A, init.level.B, add.args=add.args)
+  res <- CFO.simu.fn(target, p.true.4, ncohort=ncohort, cohortsize=cohortsize, init.level.A, init.level.B, add.args=add.args)
+  if (res$MTD[1]==99 | res$MTD[2]==99){
+    next
+  }
   if (p.true.2[res$MTD[1],res$MTD[2]] == target){
     n.MTD <- n.MTD + 1
+  }
+  if (i%%100==0){
+    message(i)
   }
 }
 
