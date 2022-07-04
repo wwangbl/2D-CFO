@@ -204,6 +204,8 @@ n.patient <- 0
 n.DLT <- 0
 for (i in 1:1000){
   res <- CFO.simu.fn(target, p.true.5, ncohort=ncohort, cohortsize=cohortsize, init.level.A, init.level.B, add.args=add.args)
+  n.patient <- n.patient + res$dose.ns[3,5]
+  n.DLT <- n.DLT + sum(res$DLT.ns)
   if (res$MTD[1]==99 | res$MTD[2]==99){
     next
   }
@@ -352,5 +354,10 @@ cat('average number of DLTs: ', n.DLT/1000)
 ```
 
 
+```{r Average performance}
+# % MTD ~ 0.5737   (BOIN 62.5)
+# % of patients at MTD ~ 0.3727   (0.375)
+# number of DLTs ~ 15.881   (18)
+```
 
 

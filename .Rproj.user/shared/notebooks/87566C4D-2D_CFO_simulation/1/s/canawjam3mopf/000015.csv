@@ -2,13 +2,13 @@
 "0","n.patient <- 0"
 "0","n.DLT <- 0"
 "0","for (i in 1:1000){"
-"0","  res <- CFO.simu.fn(target, p.true.5, ncohort=ncohort, cohortsize=cohortsize, init.level.A, init.level.B, add.args=add.args)"
-"0","  n.patient <- n.patient + res$dose.ns[3,5]"
+"0","  res <- CFO.simu.fn(target, p.true.4, ncohort=ncohort, cohortsize=cohortsize, init.level.A, init.level.B, add.args=add.args)"
+"0","  n.patient <- n.patient + res$dose.ns[1,1]"
 "0","  n.DLT <- n.DLT + sum(res$DLT.ns)"
 "0","  if (res$MTD[1]==99 | res$MTD[2]==99){"
 "0","    next"
 "0","  }"
-"0","  if (p.true.5[res$MTD[1],res$MTD[2]] == target){"
+"0","  if (p.true.4[res$MTD[1],res$MTD[2]] == target){"
 "0","    n.MTD <- n.MTD + 1"
 "0","  }"
 "0","  if (i%%100==0){"
@@ -19,6 +19,8 @@
 "
 "2","200
 "
+"1","All tested doses are overly toxic. No MTD is selected! 
+"
 "2","300
 "
 "2","400
@@ -27,34 +29,36 @@
 "
 "2","600
 "
-"2","700
-"
 "2","800
+"
+"1","All tested doses are overly toxic. No MTD is selected! 
+"
+"1","All tested doses are overly toxic. No MTD is selected! 
 "
 "2","900
 "
 "2","1000
 "
-"0","cat('scenario 5', '\n')"
-"1","scenario 5"
+"0","cat('scenario 4', '\n')"
+"1","scenario 4"
 "1"," "
 "1","
 "
 "0","cat('MTD selection rate: ', n.MTD/1000, '\n')"
 "1","MTD selection rate: "
 "1"," "
-"1","0.668"
+"1","0.616"
 "1"," "
 "1","
 "
 "0","cat('number of patients at the MTD: ', n.patient/(1000*60), '\n')"
 "1","number of patients at the MTD: "
 "1"," "
-"1","0.3978"
+"1","0.5858"
 "1"," "
 "1","
 "
 "0","cat('average number of DLTs: ', n.DLT/1000)"
 "1","average number of DLTs: "
 "1"," "
-"1","11.056"
+"1","18.467"

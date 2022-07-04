@@ -3,7 +3,7 @@
     "path": "C:/Users/User/Desktop/2D-CFO/2D_CFO_simulation.Rmd",
     "project_path": "2D_CFO_simulation.Rmd",
     "type": "r_markdown",
-    "hash": "2435142100",
+    "hash": "619152939",
     "contents": "",
     "dirty": false,
     "created": 1656919358315.0,
@@ -12,15 +12,15 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "191,1",
-        "scrollLine": "173"
+        "cursorPosition": "356,26",
+        "scrollLine": "341"
     },
     "folds": "",
-    "lastKnownWriteTime": 1656944265,
+    "lastKnownWriteTime": 1656951466,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1656944265390,
+    "last_content_update": 1656951466792,
     "read_only": false,
     "read_only_alternatives": []
 }
