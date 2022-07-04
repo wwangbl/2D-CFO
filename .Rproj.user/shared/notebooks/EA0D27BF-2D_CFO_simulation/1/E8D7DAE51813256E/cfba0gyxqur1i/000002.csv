@@ -1,0 +1,31 @@
+"0","n.MTD <- 0"
+"0",""
+"0","for (i in 1:1000){"
+"0","  res <- CFO.simu.fn(target, p.true.1, ncohort=ncohort, cohortsize=cohortsize, init.level.A, init.level.B, add.args=add.args)"
+"0","  if (res$MTD[1]==99 | res$MTD[2]==99){"
+"0","    next"
+"0","  }"
+"0","  if (p.true.2[res$MTD[1],res$MTD[2]] == target){"
+"0","    n.MTD <- n.MTD + 1"
+"0","  }"
+"0","  if (i%%100==0){"
+"0","    message(i)"
+"0","  }"
+"0","}"
+"2","rare case occurs
+"
+"2","rare case occurs
+"
+"2","rare case occurs
+"
+"2","rare case occurs
+"
+"2","rare case occurs
+"
+"2","100
+"
+"0","n.MTD/1000"
+"1","[1]"
+"1"," 0"
+"1","
+"
