@@ -1,0 +1,24 @@
+"0","n.MTD <- 0"
+"0","n.patient <- 0"
+"0","n.DLT <- 0"
+"0","for (i in 1:1000){"
+"0","  res <- CFO.simu.fn(target, p.true.4, ncohort=ncohort, cohortsize=cohortsize, init.level.A, init.level.B, add.args=add.args)"
+"0","  n.patient <- n.patient + res$dose.ns[1,1]"
+"0","  n.DLT <- n.DLT + sum(res$DLT.ns)"
+"0","  if (res$MTD[1]==99 | res$MTD[2]==99){"
+"0","    next"
+"0","  }"
+"0","  if (p.true.4[res$MTD[1],res$MTD[2]] == target){"
+"0","    n.MTD <- n.MTD + 1"
+"0","  }"
+"0","  if (i%%100==0){"
+"0","    message(i)"
+"0","  }"
+"0","}"
+"2","100
+"
+"1","All tested doses are overly toxic. No MTD is selected! 
+"
+"2","Error in select.mtd.comb(phi, tns, tys) : 
+  object 'phat.out.noCI' not found
+"
