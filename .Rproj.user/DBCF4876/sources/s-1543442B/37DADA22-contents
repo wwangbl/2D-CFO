@@ -91,7 +91,7 @@ p.true.10 <- rbind(p.trues.10[[1]],p.trues.10[[2]],p.trues.10[[3]])
 
 
 ```{r 1-time simulation}
-res <- CFO.simu.fn(target, p.true.4, ncohort=ncohort, cohortsize=cohortsize, init.level.A, init.level.B, add.args=add.args)
+res <- CFO.simu.fn(target, p.true.1, ncohort=ncohort, cohortsize=cohortsize, init.level.A, init.level.B, add.args=add.args)
 res
 ```
 

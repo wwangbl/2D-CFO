@@ -1,6 +1,6 @@
 library(magrittr)
 library(BOIN)
-
+library(scales)
 
 
 # posterior probability of pj >= phi given data
@@ -314,13 +314,13 @@ overdose.fn <- function(phi, add.args=list()){
 }
 
 # Simulation function for CFO
-CFO.simu.fn <- function(phi, p.true, ncohort=12, init.level.A=1, init.level.B=1,
-                        cohortsize=1, add.args=list()){
+CFO.simu.fn <- function(phi, p.true, ncohort=12, cohortsize=1, init.level.A=1, init.level.B=1, add.args=list(), seed=NULL){
   # phi: Target DIL rate
   # p.true: True DIL rates under the different dose levels
   # ncohort: The number of cohorts
   # cohortsize: The sample size in each cohort
   # alp.prior, bet.prior: prior parameters
+  set.seed(seed)
   earlystop <- 0
   ndose.A <- length(p.true[,1])
   ndose.B <- length(p.true[1,])
@@ -330,9 +330,6 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, init.level.A=1, init.level.B=1,
   tys <- matrix(0, ndose.A, ndose.B) # number of responses for different doses.
   tns <- matrix(0, ndose.A, ndose.B) # number of subject for different doses.
   tover.doses <- matrix(0, ndose.A, ndose.B) # Whether each dose is overdosed or not, 1 yes
-  
-  
-  
   
   for (i in 1:ncohort){
     # message(paste(i, '-th step:'))
@@ -347,12 +344,29 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, init.level.A=1, init.level.B=1,
     tys[cidx.A, cidx.B] <- tys[cidx.A, cidx.B] + sum(cres)
     tns[cidx.A, cidx.B] <- tns[cidx.A, cidx.B] + cohortsize
     
-    
-    
     cy <- tys[cidx.A, cidx.B]
     cn <- tns[cidx.A, cidx.B]
     
     add.args <- c(list(y=cy, n=cn, tys=tys, tns=tns, cidx.A=cidx.A, cidx.B=cidx.B), add.args)
+    
+    # quick escalation
+    if (sum(tys)==0){
+      if (cidx.A == ndose.A & cidx.B != ndose.B){
+        cidx.B <- cidx.B +1
+      } else if (cidx.A != ndose.A & cidx.B == ndose.B){
+        cidx.A <- cidx.A +1
+      } else if (cidx.A != ndose.A & cidx.B != ndose.B){
+        rand <- rbinom(1,1,0.5)
+        if(rand == 0){
+          cidx.A <- cidx.A + 1
+        } else {
+          cidx.B <- cidx.B + 1
+        }
+      } else {
+        next
+      }
+      next
+    }
     
     if (overdose.fn(phi, add.args)){
       tover.doses[cidx.A:ndose.A, cidx.B:ndose.B] <- 1
@@ -411,11 +425,6 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, init.level.A=1, init.level.B=1,
     } else {
       message('no such case')
     }
-    
-    # message(paste('cys[2,]: ', cys[2,1],cys[2,2],cys[2,3]))
-    # message(paste('cns[2,]: ', cns[2,1],cns[2,2],cns[2,3]))
-    # message(paste('cys[,2]: ', cys[1,2],cys[2,2],cys[3,2]))
-    # message(paste('cns[,2]: ', cns[1,2],cns[2,2],cns[3,2]))
 
     idx.chg <- make.decision.2dCFO.fn(phi, cys, cns, add.args$alp.prior, add.args$bet.prior, cover.doses)
     cidx.A <- cidx.A + idx.chg[1]
@@ -427,7 +436,46 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, init.level.A=1, init.level.B=1,
   }else{
     MTD <- c(99,99)
   }
-  list(MTD=MTD, dose.ns=tns, DLT.ns=tys, p.true=p.true, target=phi, over.doses=tover.doses)
+  
+  correct <- 0
+  if(p.true[MTD[1],MTD[2]]==phi){
+    correct <- 1
+  }
+  npercent <- 0
+  for (j in 1:ndose.A) {
+    for (k in 1:ndose.B) {
+      if (p.true[j,k]==phi){
+        npercent <- npercent + tns[j,k]
+      }
+    }
+  }
+  npercent <- percent(npercent/(ncohort*cohortsize))
+  list(MTD=MTD, dose.ns=tns, DLT.ns=tys, p.true=p.true, target=phi, over.doses=tover.doses, correct=correct, npercent=npercent, ntox=sum(tys))
+}
+
+
+
+
+
+CFO.getoc.fn <- function(phi, p.true, ncohort=12, init.level.A=1, init.level.B=1, cohortsize=1, add.args=list(), n.itera){
+  n.MTD <- 0
+  n.patient <- 0
+  n.DLT <- 0
+  for (i in 1:n.itera){
+    res <- CFO.simu.fn(target, p.true.1, ncohort=ncohort, cohortsize=cohortsize, init.level.A, init.level.B, add.args=add.args)
+    n.patient <- n.patient + res$dose.ns[3,2] + res$dose.ns[2,3] + res$dose.ns[1,4]
+    n.DLT <- n.DLT + sum(res$DLT.ns)
+    if (res$MTD[1]==99 | res$MTD[2]==99){
+      next
+    }
+    if (p.true.1[res$MTD[1],res$MTD[2]] == target){
+      n.MTD <- n.MTD + 1
+    }
+    # if (i%%100==0){
+    #   message(i)
+    # }
+  }
+  list(pcs = percent(n.MTD/n.itera), npercent = percent(n.patient/(n.itera*ncohort*cohortsize)), totaltox = n.DLT/n.itera)
 }
 
 
