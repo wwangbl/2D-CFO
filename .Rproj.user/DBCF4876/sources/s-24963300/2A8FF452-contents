@@ -1,7 +1,7 @@
 library(magrittr)
 library(BOIN)
 library(scales)
-
+library(dfcomb)
 
 # posterior probability of pj >= phi given data
 post.prob.fn <- function(phi, y, n, alp.prior=0.1, bet.prior=0.1){
@@ -311,6 +311,7 @@ overdose.fn <- function(phi, add.args=list()){
   }else{
     return(FALSE)
   }
+  
 }
 
 # Simulation function for CFO
@@ -368,9 +369,9 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, cohortsize=1, init.level.A=1, i
       next
     }
     
-    if (overdose.fn(phi, add.args)){
-      tover.doses[cidx.A:ndose.A, cidx.B:ndose.B] <- 1
-    }
+    # if (overdose.fn(phi, add.args)){
+    #   tover.doses[cidx.A:ndose.A, cidx.B:ndose.B] <- 1
+    # }
     
     if (tover.doses[1,1] == 1){
       earlystop <- 1
@@ -438,9 +439,12 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, cohortsize=1, init.level.A=1, i
   }
   
   correct <- 0
-  if(p.true[MTD[1],MTD[2]]==phi){
+  if(MTD[1]>ndose.A | MTD[2]>ndose.B){
+    correct <- 0
+  } else if (p.true[MTD[1],MTD[2]]==phi){
     correct <- 1
   }
+
   npercent <- 0
   for (j in 1:ndose.A) {
     for (k in 1:ndose.B) {
@@ -454,29 +458,6 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, cohortsize=1, init.level.A=1, i
 }
 
 
-
-
-
-CFO.getoc.fn <- function(phi, p.true, ncohort=12, init.level.A=1, init.level.B=1, cohortsize=1, add.args=list(), n.itera){
-  n.MTD <- 0
-  n.patient <- 0
-  n.DLT <- 0
-  for (i in 1:n.itera){
-    res <- CFO.simu.fn(target, p.true.1, ncohort=ncohort, cohortsize=cohortsize, init.level.A, init.level.B, add.args=add.args)
-    n.patient <- n.patient + res$dose.ns[3,2] + res$dose.ns[2,3] + res$dose.ns[1,4]
-    n.DLT <- n.DLT + sum(res$DLT.ns)
-    if (res$MTD[1]==99 | res$MTD[2]==99){
-      next
-    }
-    if (p.true.1[res$MTD[1],res$MTD[2]] == target){
-      n.MTD <- n.MTD + 1
-    }
-    # if (i%%100==0){
-    #   message(i)
-    # }
-  }
-  list(pcs = percent(n.MTD/n.itera), npercent = percent(n.patient/(n.itera*ncohort*cohortsize)), totaltox = n.DLT/n.itera)
-}
 
 
 
@@ -624,4 +605,32 @@ select.mtd.comb <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = 
     class(out)<-"boin"
     return(out)
   }
+}
+
+  
+dfcomb.simu.fn = function(ndose_a1, ndose_a2, p_tox, target, target_min, target_max, prior_tox_a1, prior_tox_a2, n_cohort,
+                          cohort, tite=FALSE, time_full=0, poisson_rate=0, nsim, c_e=0.85, c_d=0.45, c_stop=0.95, c_t=0.5,
+                          c_over=0.25, cmin_overunder=2, cmin_mtd=3, cmin_recom=1, startup=1, alloc_rule=1, early_stop=1,
+                          nburn=2000, niter=5000, seed=NULL){
+  
+  res <- CombIncrease_sim(ndose_a1, ndose_a2, p_tox, target, target_min, target_max, prior_tox_a1, prior_tox_a2, n_cohort,
+                          cohort, tite, time_full, poisson_rate, nsim, c_e, c_d, c_stop, c_t,
+                          c_over, cmin_overunder, cmin_mtd, cmin_recom, startup, alloc_rule, early_stop,
+                          nburn, niter, seed)
+  MTD <- which(res$rec_dose == 100, arr.ind = T)
+  
+  correct <- 0
+  if(p_tox[MTD[1],MTD[2]]==target){
+    correct <- 1
+  }
+  npercent <- 0
+  for (j in 1:ndose_a1) {
+    for (k in 1:ndose_a2) {
+      if (p_tox[j,k]==target){
+        npercent <- npercent + res$n_pat_dose[j,k]
+      }
+    }
+  }
+  npercent <- percent(npercent/(ncohort*cohort))
+  list(correct=correct, npercent=npercent, ntox=sum(res$n_tox_dose))
 }

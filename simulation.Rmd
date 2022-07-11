@@ -10,13 +10,14 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 source("2D_CFO_MTD.R")
-
+library(parallel)
 
 target <- 0.30
 ncohort <- 20
 cohortsize <- 3
 init.level.A <- 1
 init.level.B <- 1
+n.cores <- detectCores()
 
 add.args <- list(alp.prior=target, bet.prior=1-target)
 ```
@@ -104,7 +105,17 @@ res <- CFO.simu.fn(target, p.true.1, ncohort=ncohort, cohortsize=cohortsize, ini
 res
 ```
 ```{r}
-res.BOIN <- get.oc.comb(target, p.true.1, ncohort, cohortsize, ntrial=1)
+prior_a1 = c(0.1, 0.2, 0.3)
+prior_a2 = c(0.1, 0.2, 0.3, 0.4, 0.5)
+prior_tox_a1 = c(0.2, 0.3, 0.4)
+prior_tox_a2 = c(0.12, 0.2, 0.3, 0.4, 0.5)
+sim1 = CombIncrease_sim(ndose_a1=3, ndose_a2=5, p_tox=p.true.1, target=0.30,
+target_min=0.20, target_max=0.40, prior_tox_a1=prior_tox_a1,
+prior_tox_a2=prior_tox_a2, n_cohort=20, cohort=3, tite=FALSE, nsim=10,
+c_over=1, cmin_overunder=3, cmin_recom=1, startup=1, alloc_rule=1,
+early_stop=1, seed=2)
+sim1
+
 ```
 
 
@@ -114,7 +125,7 @@ npercent.CFO <- npercent.BOIN <- npercent.dfcomb <- 0
 ntox.CFO <- ntox.BOIN <- ntox.dfcomb <- 0
 seeds <- 1:5000
 
-simulate <- function(i){
+simulate1 <- function(i){
   res.CFO <- CFO.simu.fn(target, p.true.1, ncohort, cohortsize, init.level.A, init.level.B, add.args=add.args, seed=seeds[i])
   pcs.CFO <<- pcs.CFO + res.CFO$correct
   npercent.CFO <<- npercent.CFO + as.numeric(sub("%","",res.CFO$npercent))/100
@@ -124,13 +135,22 @@ simulate <- function(i){
   pcs.BOIN <<- pcs.BOIN + as.numeric(sub("%","",res.BOIN$pcs))/100
   npercent.BOIN <<- npercent.BOIN + as.numeric(sub("%","",res.BOIN$npercent))/100
   ntox.BOIN <<- ntox.BOIN + res.BOIN$totaltox
-}
-
-for (i in 1:10) {
-  simulate(i)
-}
   
+  res.dfcomb <- dfcomb.simu.fn(ndose_a1=3, ndose_a2=5, p_tox=p.true.1, target=0.30, target_min=0.20, target_max=0.40, 
+                               prior_tox_a1=prior_tox_a1, prior_tox_a2=prior_tox_a2, n_cohort=20, cohort=3, tite=FALSE, 
+                               nsim=1, c_over=1, cmin_overunder=3, cmin_recom=1, startup=1, alloc_rule=1, early_stop=1, seed=seeds[i])
+  pcs.dfcomb <<- pcs.dfcomb + res.dfcomb$correct
+  npercent.dfcomb <<- npercent.dfcomb + as.numeric(sub("%","",res.dfcomb$npercent))/100
+  ntox.dfcomb <<- ntox.dfcomb + res.dfcomb$ntox
+}
 
+# for (i in 1:10) {
+#   simulate1(i)
+# }
+
+r <- mclapply(1:10, simulate1(i), mc.cores = n.cores)
 ```
+
+
 
 
