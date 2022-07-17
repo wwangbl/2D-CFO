@@ -1,0 +1,208 @@
+---
+title: "compare"
+output: html_document
+date: '2022-07-12'
+---
+
+```{r}
+source("2D_CFO_prior.R")
+library(parallel)
+
+target <- 0.30
+ncohort <- 20
+cohortsize <- 3
+init.level.A <- 1
+init.level.B <- 1
+n.cores <- detectCores()
+prior_a1 = c(0.1, 0.2, 0.3)
+prior_a2 = c(0.1, 0.2, 0.3, 0.4, 0.5)
+prior_tox_a1 = c(0.2, 0.3, 0.4)
+prior_tox_a2 = c(0.12, 0.2, 0.3, 0.4, 0.5)
+seeds <- 1:5000
+
+add.args <- list(alp.prior=target, bet.prior=1-target)
+```
+
+
+```{r}
+p.trues.1 <- list()
+p.trues.1[[1]] <- c(0.05, 0.10, 0.15, 0.30, 0.45)
+p.trues.1[[2]] <- c(0.10, 0.15, 0.30, 0.45, 0.55)
+p.trues.1[[3]] <- c(0.15, 0.30, 0.45, 0.50, 0.60)
+p.true.1 <- rbind(p.trues.1[[1]],p.trues.1[[2]],p.trues.1[[3]])
+
+
+p.trues.2 <- list()
+p.trues.2[[1]] <- c(0.15, 0.30, 0.45, 0.50, 0.60)
+p.trues.2[[2]] <- c(0.30, 0.45, 0.50, 0.60, 0.75)
+p.trues.2[[3]] <- c(0.45, 0.55, 0.60, 0.70, 0.80)
+p.true.2 <- rbind(p.trues.2[[1]],p.trues.2[[2]],p.trues.2[[3]])
+
+
+p.trues.3 <- list()
+p.trues.3[[1]] <- c(0.02, 0.07, 0.10, 0.15, 0.30)
+p.trues.3[[2]] <- c(0.7, 0.10, 0.15, 0.30, 0.45)
+p.trues.3[[3]] <- c(0.10, 0.15, 0.30, 0.45, 0.55)
+p.true.3 <- rbind(p.trues.3[[1]],p.trues.3[[2]],p.trues.3[[3]])
+
+
+p.trues.4 <- list()
+p.trues.4[[1]] <- c(0.30, 0.45, 0.60, 0.70, 0.80)
+p.trues.4[[2]] <- c(0.45, 0.55, 0.65, 0.75, 0.85)
+p.trues.4[[3]] <- c(0.50, 0.60, 0.70, 0.80, 0.90)
+p.true.4 <- rbind(p.trues.4[[1]],p.trues.4[[2]],p.trues.4[[3]])
+
+
+p.trues.5 <- list()
+p.trues.5[[1]] <- c(0.01, 0.02, 0.08, 0.13, 0.15)
+p.trues.5[[2]] <- c(0.03, 0.05, 0.10, 0.13, 0.15)
+p.trues.5[[3]] <- c(0.07, 0.09, 0.12, 0.15, 0.30)
+p.true.5 <- rbind(p.trues.5[[1]],p.trues.5[[2]],p.trues.5[[3]])
+
+
+p.trues.6 <- list()
+p.trues.6[[1]] <- c(0.05, 0.08, 0.10, 0.13, 0.15)
+p.trues.6[[2]] <- c(0.09, 0.12, 0.15, 0.30, 0.45)
+p.trues.6[[3]] <- c(0.15, 0.30, 0.45, 0.50, 0.60)
+p.true.6 <- rbind(p.trues.6[[1]],p.trues.6[[2]],p.trues.6[[3]])
+
+
+p.trues.7 <- list()
+p.trues.7[[1]] <- c(0.07, 0.10, 0.12, 0.15, 0.30)
+p.trues.7[[2]] <- c(0.15, 0.30, 0.45, 0.52, 0.60)
+p.trues.7[[3]] <- c(0.30, 0.50, 0.60, 0.65, 0.75)
+p.true.7 <- rbind(p.trues.7[[1]],p.trues.7[[2]],p.trues.7[[3]])
+
+
+p.trues.8 <- list()
+p.trues.8[[1]] <- c(0.02, 0.10, 0.15, 0.50, 0.60)
+p.trues.8[[2]] <- c(0.05, 0.12, 0.30, 0.55, 0.70)
+p.trues.8[[3]] <- c(0.08, 0.15, 0.45, 0.60, 0.80)
+p.true.8 <- rbind(p.trues.8[[1]],p.trues.8[[2]],p.trues.8[[3]])
+
+
+p.trues.9 <- list()
+p.trues.9[[1]] <- c(0.005, 0.01, 0.02, 0.04, 0.07)
+p.trues.9[[2]] <- c(0.02, 0.05, 0.08, 0.12, 0.15)
+p.trues.9[[3]] <- c(0.15, 0.30, 0.45, 0.55, 0.65)
+p.true.9 <- rbind(p.trues.9[[1]],p.trues.9[[2]],p.trues.9[[3]])
+
+
+p.trues.10 <- list()
+p.trues.10[[1]] <- c(0.05, 0.10, 0.15, 0.30, 0.45)
+p.trues.10[[2]] <- c(0.45, 0.50, 0.60, 0.65, 0.70)
+p.trues.10[[3]] <- c(0.70, 0.75, 0.80, 0.85, 0.90)
+p.true.10 <- rbind(p.trues.10[[1]],p.trues.10[[2]],p.trues.10[[3]])
+
+p.trues.11 <- list()
+p.trues.11[[1]] <- c(0.05, 0.10, 0.15, 0.33, 0.45)
+p.trues.11[[2]] <- c(0.10, 0.15, 0.30, 0.45, 0.55)
+p.trues.11[[3]] <- c(0.15, 0.27, 0.45, 0.50, 0.60)
+p.true.11 <- rbind(p.trues.1[[1]],p.trues.1[[2]],p.trues.1[[3]])
+
+p.trues.12 <- list()
+p.trues.12[[1]] <- c(0.07, 0.10, 0.12, 0.15, 0.33)
+p.trues.12[[2]] <- c(0.15, 0.30, 0.45, 0.52, 0.60)
+p.trues.12[[3]] <- c(0.27, 0.50, 0.60, 0.65, 0.75)
+p.true.12 <- rbind(p.trues.12[[1]],p.trues.12[[2]],p.trues.12[[3]])
+```
+
+
+# ```{r}
+# 
+# simulate1 <- function(i){
+# 
+#   res.CFO <- CFO.simu.fn(target, p.true.1, ncohort, cohortsize, init.level.A, init.level.B, add.args=add.args, seed=seeds[i])
+#   
+#   res.BOIN <- get.oc.comb(target, p.true.1, ncohort, cohortsize, ntrial=1, seed=seeds[i])
+# 
+#   
+#   res.dfcomb <- dfcomb.simu.fn(ndose_a1=3, ndose_a2=5, p_tox=p.true.1, target=0.30, target_min=0.20, target_max=0.40, 
+#                                prior_tox_a1=prior_tox_a1, prior_tox_a2=prior_tox_a2, n_cohort=20, cohort=3, tite=FALSE, 
+#                                nsim=1, c_over=1, cmin_overunder=3, cmin_recom=1, startup=1, alloc_rule=1, early_stop=1, seed=seeds[i])
+# 
+#   
+#   res <- c(res.CFO$correct,
+#            as.numeric(sub("%","",res.CFO$npercent))/100,
+#            res.CFO$ntox,
+#            as.numeric(sub("%","",res.BOIN$pcs))/100,
+#            as.numeric(sub("%","",res.BOIN$npercent))/100,
+#            res.BOIN$totaltox,
+#            res.dfcomb$correct,
+#            as.numeric(sub("%","",res.dfcomb$npercent))/100,
+#            res.dfcomb$ntox)
+#   return(res)
+# }
+# 
+# r <- mclapply(1:5000, simulate1, mc.cores = 10)
+# results <- Reduce("+", r)
+# results/5000
+# ```
+# 
+# 
+# ```{r}
+# simulate1 <- function(i){
+# 
+#   res.dfcomb <- dfcomb.simu.fn(ndose_a1=3, ndose_a2=5, p_tox=p.true.1, target=0.30, target_min=0.20, target_max=0.40, 
+#                                prior_tox_a1=prior_tox_a1, prior_tox_a2=prior_tox_a2, n_cohort=20, cohort=3, tite=FALSE, 
+#                                nsim=1, c_over=1, cmin_overunder=3, cmin_recom=1, startup=1, alloc_rule=1, early_stop=1, seed=seeds[i])
+# 
+#   
+#   res <- c(res.dfcomb$correct,
+#            as.numeric(sub("%","",res.dfcomb$npercent))/100,
+#            res.dfcomb$ntox)
+#   return(res)
+# }
+# 
+# r <- mclapply(1:5000, simulate1, mc.cores = 10)
+# results <- Reduce("+", r)
+# results/5000
+# ```
+# 
+# 
+# ```{r}
+# simulate1 <- function(i){
+# 
+#   res.CFO <- CFO.simu.fn(target, p.true.1, ncohort, cohortsize, init.level.A, init.level.B, add.args=add.args, seed=seeds[i])
+#   
+#   res.BOIN <- get.oc.comb(target, p.true.1, ncohort, cohortsize, ntrial=1, seed=seeds[i])
+# 
+#   
+#   res <- c(res.CFO$correct,
+#            as.numeric(sub("%","",res.CFO$npercent))/100,
+#            res.CFO$ntox,
+#            as.numeric(sub("%","",res.BOIN$pcs))/100,
+#            as.numeric(sub("%","",res.BOIN$npercent))/100,
+#            res.BOIN$totaltox)
+#   return(res)
+# }
+# 
+# 
+# r1 <- mclapply(1:5000, simulate12, mc.cores = 10)
+# results1 <- Reduce("+", r12)
+# results1/5000
+# ```
+
+```{r}
+simulate <- function(i){
+
+  res.CFO <- CFO.simu.fn(target, p.true.10, ncohort, cohortsize, init.level.A, init.level.B, n0=0.1, p.min=0.1, p.max=0.9, add.args=add.args, seed=seeds[i])
+  
+  res <- c(res.CFO$correct,
+           as.numeric(sub("%","",res.CFO$npercent))/100,
+           res.CFO$ntox)
+  return(res)
+}
+
+
+r <- mclapply(1:100, simulate, mc.cores = 10)
+results1 <- Reduce("+", r)
+results1/100
+```
+
+```{r}
+res <- CFO.simu.fn(target, p.true.1, ncohort=ncohort, cohortsize=cohortsize, init.level.A, init.level.B, n0=1, p.min=0.1, p.max=0.6, add.args=add.args, seed = 1)
+res
+```
+
+

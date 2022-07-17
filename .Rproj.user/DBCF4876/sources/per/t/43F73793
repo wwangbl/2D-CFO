@@ -1,28 +1,27 @@
 {
-    "id": "37FEC3BE",
-    "path": "C:/Users/User/Desktop/2D-CFO/simulation.Rmd",
-    "project_path": "simulation.Rmd",
+    "id": "43F73793",
+    "path": "C:/Users/User/Desktop/2D-CFO/compare.Rmd",
+    "project_path": "compare.Rmd",
     "type": "r_markdown",
-    "hash": "0",
+    "hash": "2661538799",
     "contents": "",
     "dirty": false,
-    "created": 1657005663243.0,
+    "created": 1657602823650.0,
     "source_on_save": false,
     "relative_order": 3,
     "properties": {
         "tempName": "Untitled1",
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "289,0",
-        "scrollLine": "288",
-        "last_setup_crc32": "24963300bb338d19"
+        "cursorPosition": "203,35",
+        "scrollLine": "202"
     },
     "folds": "",
-    "lastKnownWriteTime": 1657456018,
+    "lastKnownWriteTime": 1658077485,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1657502402176,
+    "last_content_update": 1658077485427,
     "read_only": false,
     "read_only_alternatives": []
 }

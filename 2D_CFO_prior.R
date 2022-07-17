@@ -10,23 +10,33 @@ post.prob.fn <- function(phi, y, n, alp.prior=0.1, bet.prior=0.1){
   1 - pbeta(phi, alp, bet)
 }
 
+set.priors <- function(n0, ndose.A, ndose.B, p.min, p.max){
+  priors <- array(0, dim = c(ndose.A,ndose.B,2))
+  for (j in 1:ndose.A){
+    for (k in 1:ndose.B){
+      priors[j,k,1] <- n0*p.min + n0*(j+k-2)*(p.max-p.min)/(ndose.A+ndose.B-2)
+      priors[j,k,2] <- n0 - priors[j,k,1]
+    }
+  }
+  return(priors)
+}
 
 prob.int <- function(phi, y1, n1, y2, n2, alp.prior, bet.prior){
   alp1 <- alp.prior + y1
   alp2 <- alp.prior + y2
-  bet1 <- alp.prior + n1 - y1
-  bet2 <- alp.prior + n2 - y2
-  # message(paste('y1,y2,n1,n2: ',y1, n1, y2, n2))
+  bet1 <- bet.prior + n1 - y1
+  bet2 <- bet.prior + n2 - y2
+  # message(paste('a1,b1,a2,b2: ',alp1, bet1, alp2, bet2))
   fn.min <- function(x){
     dbeta(x, alp1, bet1)*(1-pbeta(x, alp2, bet2))
   }
   fn.max <- function(x){
     pbeta(x, alp1, bet1)*dbeta(x, alp2, bet2)
   }
-  const.min <- integrate(fn.min, lower=0, upper=1)$value
-  const.max <- integrate(fn.max, lower=0, upper=1)$value
-  p1 <- integrate(fn.min, lower=0, upper=phi)$value/const.min
-  p2 <- integrate(fn.max, lower=0, upper=phi)$value/const.max
+  const.min <- integrate(fn.min, lower=0, upper=1, stop.on.error = FALSE)$value
+  const.max <- integrate(fn.max, lower=0, upper=1, stop.on.error = FALSE)$value
+  p1 <- integrate(fn.min, lower=0, upper=phi, stop.on.error = FALSE)$value/const.min
+  p2 <- integrate(fn.max, lower=0, upper=phi, stop.on.error = FALSE)$value/const.max
   
   list(p1=p1, p2=p2)
 }
@@ -178,7 +188,7 @@ make.decision.1dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
       }else{
         return(2)
       }
-
+      
     }else  if (!(is.na(cys[1]) | is.na(cys[3]) | cover.doses[3]==1)){
       gam1 <- optim.gamma.fn(cns[1], cns[2], phi, "L", alp.prior, bet.prior)$gamma
       gam2 <- optim.gamma.fn(cns[2], cns[3], phi, "R", alp.prior, bet.prior)$gamma
@@ -296,10 +306,10 @@ make.decision.2dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
   }
   
   return (c(cidx.A, cidx.B))
-
+  
 }
-  
-  
+
+
 overdose.fn <- function(phi, add.args=list()){
   y <- add.args$y
   n <- add.args$n
@@ -315,7 +325,7 @@ overdose.fn <- function(phi, add.args=list()){
 }
 
 # Simulation function for CFO
-CFO.simu.fn <- function(phi, p.true, ncohort=12, cohortsize=1, init.level.A=1, init.level.B=1, add.args=list(), seed=NULL){
+CFO.simu.fn <- function(phi, p.true, ncohort=12, cohortsize=1, init.level.A=1, init.level.B=1, n0=0.1, p.min=0.1, p.max=0.6, add.args=list(), seed=NULL){
   # phi: Target DIL rate
   # p.true: True DIL rates under the different dose levels
   # ncohort: The number of cohorts
@@ -327,6 +337,8 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, cohortsize=1, init.level.A=1, i
   ndose.B <- length(p.true[1,])
   cidx.A <- init.level.A
   cidx.B <- init.level.B
+  
+  priors <- set.priors(n0, ndose.A, ndose.B, p.min, p.max)
   
   tys <- matrix(0, ndose.A, ndose.B) # number of responses for different doses.
   tns <- matrix(0, ndose.A, ndose.B) # number of subject for different doses.
@@ -348,26 +360,26 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, cohortsize=1, init.level.A=1, i
     cy <- tys[cidx.A, cidx.B]
     cn <- tns[cidx.A, cidx.B]
     
-    add.args <- c(list(y=cy, n=cn, tys=tys, tns=tns, cidx.A=cidx.A, cidx.B=cidx.B), add.args)
+    add.args <- c(list(y=cy, n=cn, tys=tys, tns=tns, cidx.A=cidx.A, cidx.B=cidx.B, alp.prior=priors[cidx.A,cidx.B,1], bet.prior=priors[cidx.A,cidx.B,2]), add.args)
     
     # quick escalation
-    if (sum(tys)==0){
-      if (cidx.A == ndose.A & cidx.B != ndose.B){
-        cidx.B <- cidx.B +1
-      } else if (cidx.A != ndose.A & cidx.B == ndose.B){
-        cidx.A <- cidx.A +1
-      } else if (cidx.A != ndose.A & cidx.B != ndose.B){
-        rand <- rbinom(1,1,0.5)
-        if(rand == 0){
-          cidx.A <- cidx.A + 1
-        } else {
-          cidx.B <- cidx.B + 1
-        }
-      } else {
-        next
-      }
-      next
-    }
+    # if (sum(tys)==0){
+    #   if (cidx.A == ndose.A & cidx.B != ndose.B){
+    #     cidx.B <- cidx.B +1
+    #   } else if (cidx.A != ndose.A & cidx.B == ndose.B){
+    #     cidx.A <- cidx.A +1
+    #   } else if (cidx.A != ndose.A & cidx.B != ndose.B){
+    #     rand <- rbinom(1,1,0.5)
+    #     if(rand == 0){
+    #       cidx.A <- cidx.A + 1
+    #     } else {
+    #       cidx.B <- cidx.B + 1
+    #     }
+    #   } else {
+    #     next
+    #   }
+    #   next
+    # }
     
     # if (overdose.fn(phi, add.args)){
     #   tover.doses[cidx.A:ndose.A, cidx.B:ndose.B] <- 1
@@ -426,7 +438,7 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, cohortsize=1, init.level.A=1, i
     } else {
       message('no such case')
     }
-
+    
     idx.chg <- make.decision.2dCFO.fn(phi, cys, cns, add.args$alp.prior, add.args$bet.prior, cover.doses)
     cidx.A <- cidx.A + idx.chg[1]
     cidx.B <- cidx.B + idx.chg[2]
@@ -444,7 +456,7 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, cohortsize=1, init.level.A=1, i
   } else if (p.true[MTD[1],MTD[2]]==phi){
     correct <- 1
   }
-
+  
   npercent <- 0
   for (j in 1:ndose.A) {
     for (k in 1:ndose.B) {
@@ -581,11 +593,11 @@ select.mtd.comb <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = 
   if (mtd.contour == FALSE) {
     if (selectdoses[1, 1] == 99 && selectdoses[1, 2] == 99) {
       cat("All tested doses are overly toxic. No MTD is selected! \n")
-     out=list(target = target, MTD = 99, p_est = matrix(NA,nrow = dim(npts)[1], ncol = dim(npts)[2]))
+      out=list(target = target, MTD = 99, p_est = matrix(NA,nrow = dim(npts)[1], ncol = dim(npts)[2]))
     }
     else {
-    
-    out=list(target = target, MTD = selectdoses, p_est=phat.out.noCI,p_est_CI = phat.out)
+      
+      out=list(target = target, MTD = selectdoses, p_est=phat.out.noCI,p_est_CI = phat.out)
     }
     
     class(out)<-"boin"
@@ -607,7 +619,7 @@ select.mtd.comb <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = 
   }
 }
 
-  
+
 dfcomb.simu.fn = function(ndose_a1, ndose_a2, p_tox, target, target_min, target_max, prior_tox_a1, prior_tox_a2, n_cohort,
                           cohort, tite=FALSE, time_full=0, poisson_rate=0, nsim, c_e=0.85, c_d=0.45, c_stop=0.95, c_t=0.5,
                           c_over=0.25, cmin_overunder=2, cmin_mtd=3, cmin_recom=1, startup=1, alloc_rule=1, early_stop=1,
