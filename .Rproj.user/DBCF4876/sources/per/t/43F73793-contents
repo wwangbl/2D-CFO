@@ -201,7 +201,7 @@ results1/100
 ```
 
 ```{r}
-res <- CFO.simu.fn(target, p.true.1, ncohort=ncohort, cohortsize=cohortsize, init.level.A, init.level.B, n0=1, p.min=0.1, p.max=0.6, add.args=add.args, seed = 1)
+res <- CFO.simu.fn(target, p.true.3, ncohort=ncohort, cohortsize=cohortsize, init.level.A, init.level.B, add.args=add.args, seed = 1)
 res
 ```
 

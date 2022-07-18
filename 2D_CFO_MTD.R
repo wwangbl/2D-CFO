@@ -278,8 +278,8 @@ make.decision.2dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
     }
   } else if (idx.chg.A == -1 & idx.chg.B == 1){
     # message('rare case occurs')
-    LCU <- make.decision.1dCFO.fn(phi, c(cys[2,1],cys[2,2],cys[3,2]), c(cns[2,1],cns[2,2],cns[3,2]), alp.prior, 
-                                  bet.prior, c(cover.doses[2,1],cover.doses[2,2],cover.doses[3,2])) - 2
+    LCU <- make.decision.1dCFO.fn(phi, c(cys[2,1],cys[2,2],cys[3,2]), c(cns[2,1],cns[2,2],cns[3,2]), c(cap[2,1],cap[2,2],cap[3,2]), 
+                                  c(cbp[2,1],cbp[2,2],cbp[3,2]), c(cover.doses[2,1],cover.doses[2,2],cover.doses[3,2])) - 2
     if (LCU == 1){
       cidx.A <- 1
     } else if (LCU == -1){
