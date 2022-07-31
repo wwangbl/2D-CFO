@@ -1,0 +1,205 @@
+CombIncrease_sim = function(ndose_a1, ndose_a2, p_tox, target, target_min, target_max, prior_tox_a1, prior_tox_a2, n_cohort,
+                            cohort, tite=FALSE, time_full=0, poisson_rate=0, nsim, c_e=0.85, c_d=0.45, c_stop=0.95, c_t=0.5,
+                            c_over=0.25, cmin_overunder=2, cmin_mtd=3, cmin_recom=1, startup=1, alloc_rule=1, early_stop=1,
+                            nburn=2000, niter=5000, seed=14061991){
+  c_d = 1-c_d
+  dim_ptox = dim(p_tox)
+  
+  if(dim_ptox[1] != ndose_a1 || dim_ptox[2] != ndose_a2){
+    stop("Wrong dimension of the matrix for true toxicity probabilities.")
+  }
+  n_prior_tox_a1 = length(prior_tox_a1)
+  if(n_prior_tox_a1 != ndose_a1){
+    stop("The entered vector of initial guessed toxicity probabities for agent 1 is of wrong length.")
+  }
+  n_prior_tox_a2 = length(prior_tox_a2)
+  if(n_prior_tox_a2 != ndose_a2){
+    stop("The entered vector of initial guessed toxicity probabities for agent 2 is of wrong length.")
+  }
+  
+  
+  ndose_a1 = as.integer(ndose_a1)[1]
+  ndose_a2 = as.integer(ndose_a2)[1]
+  target = as.double(target)[1]
+  target_min = as.double(target_min)[1]
+  target_max = as.double(target_max)[1]
+  prior_tox_a1 = as.double(prior_tox_a1)
+  prior_tox_a2 = as.double(prior_tox_a2)
+  n_cohort = as.integer(n_cohort)[1]
+  cohort = as.integer(cohort)[1]
+  tite = as.logical(tite)[1]
+  time_full = as.double(time_full)[1]
+  poisson_rate = as.double(poisson_rate)[1]
+  nsim = as.integer(nsim)[1]
+  c_e = as.double(c_e)[1]
+  c_d = as.double(c_d)[1]
+  c_stop = as.double(c_stop)[1]
+  c_t = as.double(c_t)[1]
+  c_over = as.double(c_over)[1]
+  cmin_overunder = as.integer(cmin_overunder)[1]
+  cmin_mtd = as.integer(cmin_mtd)[1]
+  cmin_recom = as.integer(cmin_recom)[1]
+  startup = as.integer(startup)[1]
+  alloc_rule = as.integer(alloc_rule)[1]
+  early_stop = as.integer(early_stop)[1]
+  seed = as.integer(seed)[1]
+  nburn = as.integer(nburn)[1]
+  niter = as.integer(niter)[1]
+  
+  if(startup < 0 || startup > 3){
+    stop("Unknown start-up id.")
+  }
+  if(alloc_rule != 1 && alloc_rule != 2 && alloc_rule != 3){
+    stop("Unknown allocation rule id.")
+  }
+  if(early_stop != 1 && early_stop != 2 && early_stop != 3){
+    stop("Unknown early stopping rule id.")
+  }
+  if(target < 0 || target > 1){
+    stop("Targeted toxicity probability is not comprised between 0 and 1.")
+  }
+  if(target_max < 0 || target_max > 1){
+    stop("Maximum targeted toxicity probability is not comprised between 0 and 1.")
+  }
+  if(target_min < 0 || target_min > 1){
+    stop("Minimum targeted toxicity probability is not comprised between 0 and 1.")
+  }
+  if(n_cohort <= 0){
+    stop("Number of cohorts must be positive.")
+  }
+  if(cohort <= 0){
+    stop("Cohort size must be positive.")
+  }
+  if(time_full < 0){
+    stop("Full follow-up time must be positive.")
+  }
+  if(poisson_rate < 0){
+    stop("Parameter for Poisson process accrual must be positive.")
+  }
+  if(nsim <= 0){
+    stop("Number of simulations must be positive.")
+  }
+  if(c_e < 0 || c_e > 1 || c_d < 0 || c_d > 1 || c_stop < 0 || c_stop > 1 || c_t < 0 || c_t > 1 || c_over < 0 || c_over > 1){
+    stop("Probability thresholds are not comprised between 0 and 1.")
+  }
+  if(cmin_overunder < 0 || cmin_mtd < 0 || cmin_recom < 0){
+    stop("Minimum number of cohorts for stopping or recommendation rule must be positive.")
+  }
+  if(nburn <= 0 || niter <= 0){
+    stop("Number of iterations and burn-in for MCMC must be positive.")
+  }
+  for(a1 in 1:ndose_a1){
+    if(prior_tox_a1[a1] < 0 || prior_tox_a1[a1] > 1){
+      stop("At least one of the initial guessed toxicity probability for agent 1 is not comprised between 0 and 1.")
+    }
+  }
+  for(a2 in 1:ndose_a2){
+    if(prior_tox_a2[a2] < 0 || prior_tox_a2[a2] > 1){
+      stop("At least one of the initial guessed toxicity probability for agent 2 is not comprised between 0 and 1.")
+    }
+  }
+  for(a1 in 1:ndose_a1){
+    for(a2 in 1:ndose_a2){
+      if(p_tox[a1,a2] < 0 || p_tox[a1,a2] > 1){
+        stop("At least one of the true toxicity probability is not comprised between 0 and 1.")
+      }
+    }
+  }
+  p_tox_na = matrix(NA, nrow=ndose_a1+1, ncol=ndose_a2+1)
+  p_tox_na[1:ndose_a1, 1:ndose_a2] = p_tox
+  for(a1 in 1:ndose_a1){
+    for(a2 in 1:ndose_a2){
+      if(p_tox[a1,a2] >
+         min(1,p_tox_na[a1+1,a2],p_tox_na[a1,a2+1],p_tox_na[a1+1,a2+1],na.rm=TRUE)){
+        stop("The partial ordering between true toxicity probabilities is not satisfied.")
+      }
+    }
+  }
+  
+  p_tox = as.double(p_tox)
+  inconc = as.double(numeric(1))
+  n_pat_dose = as.double(numeric(ndose_a1*ndose_a2))
+  rec_dose = as.double(numeric(ndose_a1*ndose_a2))
+  n_tox_dose = as.double(numeric(ndose_a1*ndose_a2))
+  early_conc = as.double(numeric(1))
+  conc_max = as.double(numeric(1))
+  tab_pat = as.double(numeric(nsim))
+  
+  # Appeler fonction C
+  logistic = .C(C_logistic_sim, tite, ndose_a1, ndose_a2, time_full, poisson_rate, p_tox, target,
+                target_max, target_min, prior_tox_a1, prior_tox_a2, n_cohort, cohort, nsim, c_e, c_d, c_stop,
+                c_t, c_over, cmin_overunder, cmin_mtd, cmin_recom, seed, startup, alloc_rule, early_stop,
+                nburn, niter,
+                
+                rec_dose=rec_dose, n_pat_dose=n_pat_dose, n_tox_dose=n_tox_dose, inconc=inconc, early_conc=early_conc, tab_pat=tab_pat)
+  
+  nsim = logistic$nsim
+  inconc=logistic$inconc*100
+  early_conc=logistic$early_conc*100
+  conc_max=100-early_conc-inconc
+  tab_pat=logistic$tab_pat
+  rec_dose=logistic$rec_dose*100
+  n_pat_dose=logistic$n_pat_dose
+  n_tox_dose=logistic$n_tox_dose
+  
+  # Reformat outputs
+  p_tox= matrix(p_tox,nrow=ndose_a1)
+  rec_dose=matrix(rec_dose,nrow=ndose_a1)
+  n_pat_dose=matrix(n_pat_dose,nrow=ndose_a1)
+  n_tox_dose=matrix(n_tox_dose,nrow=ndose_a1)
+  p_tox_p = t(p_tox)[ndose_a2:1,]
+  rec_dose_p = t(rec_dose)[ndose_a2:1,]
+  n_pat_dose_p = t(n_pat_dose)[ndose_a2:1,]
+  n_tox_dose_p = t(n_tox_dose)[ndose_a2:1,]
+  dimnames(p_tox_p) = list("Agent 2" = ndose_a2:1, "Agent 1" = 1:ndose_a1)
+  dimnames(rec_dose_p) = list("Agent 2 " = ndose_a2:1, "Agent 1" = 1:ndose_a1)
+  dimnames(n_pat_dose_p) = list("Agent 2"=ndose_a2:1, "Agent 1" = 1:ndose_a1)
+  dimnames(n_tox_dose_p) = list("Agent 2" = ndose_a2:1, "Agent 1" = 1:ndose_a1)
+  pat_tot = round(sum(n_pat_dose),1)
+  
+  res = list(call = match.call(),
+             tite=tite,
+             ndose_a1=ndose_a1,
+             ndose_a2=ndose_a2,
+             time_full=time_full,
+             poisson_rate=poisson_rate,
+             startup=startup,
+             alloc_rule=alloc_rule,
+             early_stop=early_stop,
+             p_tox=p_tox,
+             p_tox_p=p_tox_p,
+             target=target,
+             target_min=target_min,
+             target_max=target_max,
+             prior_tox_a1=prior_tox_a1,
+             prior_tox_a2=prior_tox_a2,
+             n_cohort=n_cohort,
+             cohort=cohort,
+             pat_tot=pat_tot,
+             nsim=nsim,
+             c_e=c_e,
+             c_d=c_d,
+             c_stop=c_stop,
+             c_t=c_t,
+             c_over=c_over,
+             cmin_overunder=cmin_overunder,
+             cmin_mtd=cmin_mtd,
+             cmin_recom=cmin_recom,
+             nburn=nburn,
+             niter=niter,
+             seed=seed,
+             rec_dose=rec_dose,
+             n_pat_dose=n_pat_dose,
+             n_tox_dose=n_tox_dose,
+             rec_dose_p=rec_dose_p,
+             n_pat_dose_p=n_pat_dose_p,
+             n_tox_dose_p=n_tox_dose_p,
+             inconc=inconc,
+             early_conc=early_conc,
+             conc_max=conc_max,
+             tab_pat=tab_pat)
+  
+  class(res) = "CombIncrease_sim"
+  
+  return(res)
+}

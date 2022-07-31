@@ -2,6 +2,7 @@ library(magrittr)
 library(BOIN)
 library(scales)
 library(dfcomb)
+library(pocrm)
 
 # posterior probability of pj >= phi given data
 post.prob.fn <- function(phi, y, n, alp.prior=0.1, bet.prior=0.1){
@@ -611,12 +612,12 @@ select.mtd.comb <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = 
 dfcomb.simu.fn = function(ndose_a1, ndose_a2, p_tox, target, target_min, target_max, prior_tox_a1, prior_tox_a2, n_cohort,
                           cohort, tite=FALSE, time_full=0, poisson_rate=0, nsim, c_e=0.85, c_d=0.45, c_stop=0.95, c_t=0.5,
                           c_over=0.25, cmin_overunder=2, cmin_mtd=3, cmin_recom=1, startup=1, alloc_rule=1, early_stop=1,
-                          nburn=2000, niter=5000, seed=NULL){
+                          nburn=2000, niter=5000, seed=1){
   
   res <- CombIncrease_sim(ndose_a1, ndose_a2, p_tox, target, target_min, target_max, prior_tox_a1, prior_tox_a2, n_cohort,
                           cohort, tite, time_full, poisson_rate, nsim, c_e, c_d, c_stop, c_t,
                           c_over, cmin_overunder, cmin_mtd, cmin_recom, startup, alloc_rule, early_stop,
-                          nburn, niter, seed)
+                          nburn, niter, seed=seed)
   MTD <- which(res$rec_dose == 100, arr.ind = T)
   
   correct <- 0
@@ -634,3 +635,52 @@ dfcomb.simu.fn = function(ndose_a1, ndose_a2, p_tox, target, target_min, target_
   npercent <- percent(npercent/(ncohort*cohort))
   list(correct=correct, npercent=npercent, ntox=sum(res$n_tox_dose))
 }
+
+
+pocrm.simu.fn = function(r, alpha, prior.o, x0, stop, n, theta, tox.range, seed=1){
+  set.seed(seed)
+  fit <- pocrm.sim(r=r,alpha=alpha,prior.o=prior.o,x0=x0,stop=stop,n=n,theta=theta, nsim=1,tox.range=tox.range)
+  # message(fit$MTD.selection)
+  # MTD <- which(fit$MTD.selection!=0)
+  # message(MTD)
+  correct <- 0
+  if (length(fit$MTD.selection)==0){
+    correct <- 0
+  } else {
+    for (i in 1:length(fit$MTD.selection)){
+      if (r[fit$MTD.selection]==theta){
+        correct <- correct + 1
+      }
+    }
+    correct <- correct/length(fit$MTD.selection)
+  }
+  
+  npercent <- sum(fit$patient.allocation[which(fit$true.prob==theta)])
+  ntox <- fit$percent.DLT*n
+  
+  list(correct=correct, npercent=npercent, ntox=ntox)
+}
+
+
+# pocrm.simu.fn = function(r, alpha, prior.o, x0, stop, n, theta, tox.range, seed=1){
+#   set.seed(seed)
+#   fit <- pocrm.sim(r=r,alpha=alpha,prior.o=prior.o,x0=x0,stop=stop,n=n,theta=theta, nsim=2,tox.range=tox.range)
+#   MTD <- which(fit$MTD.selection!=0)
+#   correct <- 0
+#   if (length(MTD)==0){
+#     correct <- 0
+#   } else {
+#     for (i in 1:length(MTD)){
+#       if (fit$true.prob[MTD[i]]==theta){
+#         correct <- correct + 1
+#       }
+#     }
+#     correct <- correct/length(MTD)
+#   }
+#   
+#   npercent <- sum(fit$patient.allocation[which(fit$true.prob==theta)])
+#   ntox <- fit$percent.DLT*n
+#   
+#   list(correct=correct, npercent=npercent, ntox=ntox)
+# }
+
