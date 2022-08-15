@@ -1,1 +1,0 @@
-{"frames":[{"func":"pocrm.sim(r, alpha, prior.o, x0, stop, n, theta, nsim)","file":"","line_number":0,"end_line_number":0,"character_number":0,"end_character_number":0},{"func":"twostgcrm(r, x0, stop, n, theta)","file":"","line_number":0,"end_line_number":0,"character_number":0,"end_character_number":0}],"message":"Error in if (index) { : missing value where TRUE/FALSE needed\n"}

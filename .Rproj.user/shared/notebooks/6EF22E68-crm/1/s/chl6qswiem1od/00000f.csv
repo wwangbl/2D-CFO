@@ -1,0 +1,1 @@
+"0","if(length(runif(1)<=r[obs$level[N]])==0){obs$tox[N]<-1}"

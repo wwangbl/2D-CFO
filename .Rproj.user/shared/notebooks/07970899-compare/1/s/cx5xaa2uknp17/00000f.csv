@@ -1,4 +1,20 @@
 "0","source(""2D_CFO_MTD.R"")"
+"2","
+载入程辑包：‘BOIN’
+
+"
+"2","The following object is masked _by_ ‘.GlobalEnv’:
+
+    select.mtd.comb
+
+"
+"2","Warning:"
+"2"," 程辑包‘scales’是用R版本4.2.1 来建造的
+"
+"2","Warning:"
+"2"," 程辑包‘dfcomb’是用R版本4.2.1 来建造的
+"
+"0","source(""pocrm.R"")"
 "0","library(parallel)"
 "0",""
 "0","target <- 0.30"

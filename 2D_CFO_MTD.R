@@ -2,7 +2,6 @@ library(magrittr)
 library(BOIN)
 library(scales)
 library(dfcomb)
-library(pocrm)
 
 # posterior probability of pj >= phi given data
 post.prob.fn <- function(phi, y, n, alp.prior=0.1, bet.prior=0.1){
@@ -62,6 +61,8 @@ OR.values <- function(phi, y1, n1, y2, n2, alp.prior, bet.prior, type){
   }
   return(OR)
 }
+
+
 
 All.OR.table <- function(phi, n1, n2, type, alp.prior, bet.prior){
   ret.mat <- matrix(rep(0, (n1+1)*(n2+1)), nrow=n1+1)
@@ -279,8 +280,8 @@ make.decision.2dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
     }
   } else if (idx.chg.A == -1 & idx.chg.B == 1){
     # message('rare case occurs')
-    LCU <- make.decision.1dCFO.fn(phi, c(cys[2,1],cys[2,2],cys[3,2]), c(cns[2,1],cns[2,2],cns[3,2]), c(cap[2,1],cap[2,2],cap[3,2]), 
-                                  c(cbp[2,1],cbp[2,2],cbp[3,2]), c(cover.doses[2,1],cover.doses[2,2],cover.doses[3,2])) - 2
+    LCU <- make.decision.1dCFO.fn(phi, c(cys[2,1],cys[2,2],cys[3,2]), c(cns[2,1],cns[2,2],cns[3,2]), alp.prior, 
+                                  bet.prior, c(cover.doses[2,1],cover.doses[2,2],cover.doses[3,2])) - 2
     if (LCU == 1){
       cidx.A <- 1
     } else if (LCU == -1){
@@ -301,7 +302,7 @@ make.decision.2dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
 }
   
   
-overdose.fn <- function(phi, add.args=list()){
+  overdose.fn <- function(phi, add.args=list()){
   y <- add.args$y
   n <- add.args$n
   alp.prior <- add.args$alp.prior
@@ -618,11 +619,15 @@ dfcomb.simu.fn = function(ndose_a1, ndose_a2, p_tox, target, target_min, target_
                           cohort, tite, time_full, poisson_rate, nsim, c_e, c_d, c_stop, c_t,
                           c_over, cmin_overunder, cmin_mtd, cmin_recom, startup, alloc_rule, early_stop,
                           nburn, niter, seed=seed)
-  MTD <- which(res$rec_dose == 100, arr.ind = T)
   
   correct <- 0
-  if(p_tox[MTD[1],MTD[2]]==target){
-    correct <- 1
+  if(sum(res$rec_dose)!=100){
+    correct <- 0
+  } else {
+    MTD <- which(res$rec_dose == 100, arr.ind = T)
+    if(p_tox[MTD[1],MTD[2]]==target){
+      correct <- 1
+    }
   }
   npercent <- 0
   for (j in 1:ndose_a1) {
@@ -683,4 +688,6 @@ pocrm.simu.fn = function(r, alpha, prior.o, x0, stop, n, theta, tox.range, seed=
 #   
 #   list(correct=correct, npercent=npercent, ntox=ntox)
 # }
+
+
 
