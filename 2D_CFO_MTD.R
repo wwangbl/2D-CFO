@@ -316,6 +316,37 @@ make.decision.2dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
   
 }
 
+  
+  
+  
+preliminary <- function(p.true, ndose.A, ndose.B){
+  for (i in 1:ndose.A) {
+    tns[i,1] <<- tns[i,1] + 1
+    p <- runif(1)
+    if (p<p.true[i,1]){
+      tys[i,1] <<- 1
+      break
+    }
+  }
+  if(sum(tys==0)){
+    for (j in 1:ndose.B) {
+      tns[1,j] <<- tns[1,j] + 1
+      p <- runif(1)
+      if (p<p.true[1,j]){
+        tys[1,j] <<- 1
+        break
+      }
+    }
+  }
+  if(sum(tys)==0){
+    return(c(0,0))
+  } else {
+    return(which(tys==1, arr.ind = T))
+  }
+}
+  
+  
+  
 # Simulation function for CFO
 CFO.simu.fn <- function(phi, p.true, ncohort=12, cohortsize=1, init.level.A=1, init.level.B=1, add.args=list(), seed=NULL){
   # phi: Target DIL rate
@@ -333,6 +364,10 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, cohortsize=1, init.level.A=1, i
   tys <- matrix(0, ndose.A, ndose.B) # number of responses for different doses.
   tns <- matrix(0, ndose.A, ndose.B) # number of subject for different doses.
   tover.doses <- matrix(0, ndose.A, ndose.B) # Whether each dose is overdosed or not, 1 yes
+  
+  pre.end <- preliminary(p.true, ndose.A, ndose.B)
+  cidx.A <- pre.end[1]
+  cidx.B <- pre.end[2]
   
   for (i in 1:ncohort){
     # message(paste(i, '-th step:'))
