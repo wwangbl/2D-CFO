@@ -1,3 +1,5 @@
+library(pocrm)
+
 
 pocrm.imp <- function(alpha,prior.o,theta,y,combos){
     
@@ -70,10 +72,10 @@ pocrm.sim <- function(r,alpha,prior.o,x0,n,theta,seed){
     message('no MTD is selected')
     return(list(correct=0, npercent=0, ntox=0))
   }
-  
-  
+
   while (length(y)<n) {
     idx <- pocrm.imp(alpha,prior.o,theta,y,combos)$dose.rec
+   # message(idx)
     combos <- c(combos, rep(idx,3))
     for (i in 1:3) {
       p<-runif(1)

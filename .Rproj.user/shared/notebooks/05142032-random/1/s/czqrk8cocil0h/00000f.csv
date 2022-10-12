@@ -1,0 +1,1 @@
+"0","res <- CFO.simu.fn(target, p.true.1, ncohort, cohortsize, init.level.A, init.level.B, add.args=add.args, seed=1)"

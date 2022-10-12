@@ -315,38 +315,242 @@ make.decision.2dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
   }
   
 }
-
   
+# preliminary <- function(p.true, ndose.A, ndose.B, tys, tns, seed=seed){
+#   set.seed(seed)
+#   for (i in 1:ndose.A) {
+#     tns[i,1] <- tns[i,1] + 1
+#     p <- runif(1)
+#     if (p<p.true[i,1]){
+#       tys[i,1] <- 1
+#       return(list(tys=tys, tns=tns, position=which(tys==1, arr.ind = T)))
+#     }
+#   }
+#   
+#   for (j in 2:ndose.B) {
+#     tns[1,j] <- tns[1,j] + 1
+#     p <- runif(1)
+#     if (p<p.true[1,j]){
+#       tys[1,j] <- 1
+#       return(list(tys=tys, tns=tns, position=which(tys==1, arr.ind = T)))
+#     }
+#   }
+#   
+#   return(list(tys=tys, tns=tns, position=c(1,1)))
+# }
   
-  
-preliminary <- function(p.true, ndose.A, ndose.B){
+preliminary <- function(p.true, ndose.A, ndose.B, tys, tns, seed=seed){
+  set.seed(seed)
   for (i in 1:ndose.A) {
-    tns[i,1] <<- tns[i,1] + 1
+    tns[i,1] <- tns[i,1] + 1
     p <- runif(1)
     if (p<p.true[i,1]){
-      tys[i,1] <<- 1
+      tys[i,1] <- 1
+      position <- which(tys==1, arr.ind = T)
+      if(position[1]!=1){
+        position[1] <- position[1] - 1
+      }
+      return(list(tys=tys, tns=tns, position=position))
+    }
+  }
+  
+  for (j in 2:ndose.B) {
+    tns[1,j] <- tns[1,j] + 1
+    p <- runif(1)
+    if (p<p.true[1,j]){
+      tys[1,j] <- 1
+      position <- which(tys==1, arr.ind = T)
+      position[2] <- position[2] - 1
+      return(list(tys=tys, tns=tns, position=position))
+    }
+  }
+  
+  return(list(tys=tys, tns=tns, position=c(1,1)))
+}
+  
+######################################## Random scenario
+runif_gap <- function(n,min, max, e){
+  repeat{
+    s <- sort(runif(n,min,max))
+    mindiff <- min(diff(s))
+    if (mindiff >= e){
       break
     }
   }
-  if(sum(tys==0)){
-    for (j in 1:ndose.B) {
-      tns[1,j] <<- tns[1,j] + 1
-      p <- runif(1)
-      if (p<p.true[1,j]){
-        tys[1,j] <<- 1
-        break
-      }
+  return(s)
+}
+
+shuffle <- function(p){
+  v <- x <- c(p)
+  v[c(2,4)] <- sample(x[c(2,4)])
+  v[c(3,5,7)] <- sample(x[c(3,5,7)])
+  v[c(6,8,10)] <- sample(x[c(6,8,10)])
+  v[c(9,11,13)] <- sample(x[c(9,11,13)])
+  v[c(12,14)] <- sample(x[c(12,14)])
+  return(matrix(v,3,5))
+}
+
+shuffle1 <- function(p){
+  v <- x <- c(p)
+  v[c(2,5)] <- sample(x[c(2,5)])
+  v[c(3,6,9)] <- sample(x[c(3,6,9)])
+  v[c(4,7,10,13)] <- sample(x[c(4,7,10,13)])
+  v[c(8,11,14)] <- sample(x[c(8,11,14)])
+  v[c(12,15)] <- sample(x[c(12,15)])
+  return(matrix(v,4,4))
+}
+
+check_monoto <- function(phi, p){
+  a <- which(p==phi, arr.ind = T)
+  
+  if(length(a[,1])==1){
+    return(FALSE)
+  }
+  
+  for (i in 1:length(a[1,])) {
+    if(any(duplicated(a[,i]))){
+      return(TRUE)
     }
   }
-  if(sum(tys)==0){
-    return(c(0,0))
-  } else {
-    return(which(tys==1, arr.ind = T))
-  }
+  return(FALSE)
 }
-  
-  
-  
+
+random <- function(phi, nA, nB, e, orders, nMTD, seed){
+  set.seed(seed)
+  n <- nA*nB
+  k <- sample(4:(n-nMTD-2), 1)
+  first <- runif(k-1, 0, phi-e)
+  second <- runif(n-k-nMTD+1, phi+e, 1)
+  p <- sort(c(first, rep(phi,nMTD), second))
+  p[orders] <- p
+  p <- matrix(p, nA, nB)
+  p <- shuffle(p)
+  while (check_monoto(phi,p)==TRUE) {
+    p <- shuffle(p)
+  }
+  return(p)
+}
+###########################################
+
+# max.integral <- function(tns, tys, ndose.A, ndose.B, phi=0.3, p_min=0.2, p_max=0.4){
+#   p <- matrix(0, ndose.A, ndose.B)
+#   for (i in 1:ndose.A) {
+#     for (j in 1:ndose.B) {
+#       a <- phi+tys[i,j]
+#       b <- 1-phi+tns[i,j]-tys[i,j]
+#       p[i,j] <- pbeta(0.4,a,b)-pbeta(0.2,a,b)
+#     }
+#   }
+#   return(which(p==max(p),arr.ind = T)[1,])
+# }
+
+# max.integral <- function(tns, tys, ndose.A, ndose.B, phi=0.3, p_min=0.2, p_max=0.4){
+#   p <- matrix(0, ndose.A, ndose.B)
+#   for (i in 1:ndose.A) {
+#     for (j in 1:ndose.B) {
+#       a <- phi+tys[i,j]
+#       b <- 1-phi+tns[i,j]-tys[i,j]
+#       p[i,j] <- pbeta(0.4,a,b)-pbeta(0.2,a,b)
+#     }
+#   }
+#   return(p)
+# }
+# 
+# 
+# sampling <- function(phi, ndose.A, ndose.B, tys, tns, n, lower, upper){
+#   samples <- as.list(numeric(ndose.A*ndose.B))
+#   dim(samples) <- c(ndose.A,ndose.B)
+#   for (i in 1:ndose.A) {
+#     for (j in 1:ndose.B) {
+#       nsamples <- 0
+#       if (i==1 & j==1){
+#         next
+#       } else {
+#         
+#         if (i==1){
+#           while (nsamples<n) {
+#             pl <- rbeta(1,phi+tys[i,j-1],1-phi+tns[i,j-1]-tys[i,j-1])
+#             pc <- rbeta(1,phi+tys[i,j],1-phi+tns[i,j]-tys[i,j])
+#             if (pl<pc){
+#               samples[[i,j-1]] <- c(samples[[i,j-1]],pl)
+#               samples[[i,j]] <- c(samples[[i,j]],pc)
+#               nsamples <- nsamples + 1
+#             }
+#           }
+#         } else if (j==1){
+#           while (nsamples<n) {
+#             pd <- rbeta(1,phi+tys[i-1,j],1-phi+tns[i-1,j]-tys[i-1,j])
+#             pc <- rbeta(1,phi+tys[i,j],1-phi+tns[i,j]-tys[i,j])
+#             if (pd<pc){
+#               samples[[i-1,j]] <- c(samples[[i-1,j]],pd)
+#               samples[[i,j]] <- c(samples[[i,j]],pc)
+#               nsamples <- nsamples + 1
+#             }
+#           }
+#         } else {
+#           while (nsamples<n) {
+#             pl <- rbeta(1,phi+tys[i,j-1],1-phi+tns[i,j-1]-tys[i,j-1])
+#             pd <- rbeta(1,phi+tys[i-1,j],1-phi+tns[i-1,j]-tys[i-1,j])
+#             pc <- rbeta(1,phi+tys[i,j],1-phi+tns[i,j]-tys[i,j])
+#             if (pl<pc & pd<pc){
+#               samples[[i,j-1]] <- c(samples[[i,j-1]],pl)
+#               samples[[i-1,j]] <- c(samples[[i-1,j]],pd)
+#               samples[[i,j]] <- c(samples[[i,j]],pc)
+#               nsamples <- nsamples + 1
+#             }
+#           }
+#         }
+#       }
+#     }
+#   }
+#   
+#   p <- matrix(0,ndose.A,ndose.B)
+#   for (i in 1:ndose.A) {
+#     for (j in 1:ndose.B) {
+#       p[i,j] <- length(samples[[i,j]][samples[[i,j]]>lower & samples[[i,j]]<upper])/length(samples[[i,j]])
+#     }
+#   }
+#   return(p)
+# }
+
+line.sampling <- function(phi, ndose, tys, tns, n, lower, upper){
+  samples <- as.list(numeric(ndose))
+  p <- replicate(ndose, 0)
+  nsamples <- 0
+  while (nsamples<n) {
+    s <- replicate(ndose, 0)
+    for (i in 1:ndose) {
+      s[i] <- rbeta(1,phi+tys[i],1-phi+tns[i]-tys[i])
+    }
+    if (all(diff(s) >= 0)){
+      for (j in 1:ndose) {
+        samples[[j]] <- c(samples[[j]],s[j])
+      }
+      nsamples <- nsamples + 1
+    } else {
+      next
+    }
+  }
+  for (k in 1:ndose) {
+    p[k] <- length(samples[[k]][samples[[k]]>lower & samples[[k]]<upper])/length(samples[[k]])
+  }
+  return(p)
+}
+
+
+cross.sampling <- function(phi, ndose.A, ndose.B, tys, tns, n, lower, upper){
+  p <- matrix(0,ndose.A,ndose.B)
+  for (i in 1:ndose.A) {
+    p[i,] <- p[i,] + line.sampling(phi, ndose.B, tys[i,], tns[i,], n, lower, upper)
+  }
+  for (j in 1:ndose.B) {
+    p[,j] <- p[,j] + line.sampling(phi, ndose.A, tys[,j], tns[,j], n, lower, upper)
+  }
+  return(p)
+}
+
+
+
 # Simulation function for CFO
 CFO.simu.fn <- function(phi, p.true, ncohort=12, cohortsize=1, init.level.A=1, init.level.B=1, add.args=list(), seed=NULL){
   # phi: Target DIL rate
@@ -365,9 +569,12 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, cohortsize=1, init.level.A=1, i
   tns <- matrix(0, ndose.A, ndose.B) # number of subject for different doses.
   tover.doses <- matrix(0, ndose.A, ndose.B) # Whether each dose is overdosed or not, 1 yes
   
-  pre.end <- preliminary(p.true, ndose.A, ndose.B)
-  cidx.A <- pre.end[1]
-  cidx.B <- pre.end[2]
+  pre <- preliminary(p.true, ndose.A, ndose.B, tys, tns, seed)
+  cidx.A <- pre$position[1]
+  cidx.B <- pre$position[2]
+  tys <- pre$tys
+  tns <- pre$tns
+  ncohort <- ((ncohort*cohortsize) - sum(tns))%/%3 + 1
   
   for (i in 1:ncohort){
     # message(paste(i, '-th step:'))
@@ -470,8 +677,11 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, cohortsize=1, init.level.A=1, i
   }
   
   if (earlystop==0){
-    MTD <- select.mtd.comb(phi, tns, tys)$MTD
+    # MTD <- select.mtd.comb(phi, tns, tys)$MTD
+    p <- cross.sampling(phi, ndose.A, ndose.B, tys, tns, n=100, lower=0.2, upper=0.4)
+    MTD <- which(p==max(p),arr.ind = T)[1,]
   }else{
+    p <- matrix(0,ndose.A,ndose.B)
     MTD <- c(99,99)
   }
   
@@ -491,7 +701,7 @@ CFO.simu.fn <- function(phi, p.true, ncohort=12, cohortsize=1, init.level.A=1, i
     }
   }
   npercent <- percent(npercent/(ncohort*cohortsize))
-  list(MTD=MTD, dose.ns=tns, DLT.ns=tys, p.true=p.true, target=phi, over.doses=tover.doses, correct=correct, npercent=npercent, ntox=sum(tys))
+  list(MTD=MTD, dose.ns=tns, DLT.ns=tys, p.true=p.true, target=phi, over.doses=tover.doses, p=p, correct=correct, npercent=npercent, ntox=sum(tys))
 }
 
 
@@ -646,14 +856,14 @@ select.mtd.comb <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = 
 
   
 dfcomb.simu.fn = function(ndose_a1, ndose_a2, p_tox, target, target_min, target_max, prior_tox_a1, prior_tox_a2, n_cohort,
-                          cohort, tite=FALSE, time_full=0, poisson_rate=0, nsim, c_e=0.85, c_d=0.45, c_stop=0.95, c_t=0.5,
-                          c_over=0.25, cmin_overunder=2, cmin_mtd=3, cmin_recom=1, startup=1, alloc_rule=1, early_stop=1,
+                          cohort, tite=FALSE, time_full=0, poisson_rate=0, c_e=0.85, c_d=0.45, c_stop=0.95, c_t=0.5,
+                          c_over=0.25, cmin_overunder=2, cmin_mtd=3, cmin_recom=1, startup=0, alloc_rule=1, early_stop=1,
                           nburn=2000, niter=5000, seed=1){
   
-  res <- CombIncrease_sim(ndose_a1, ndose_a2, p_tox, target, target_min, target_max, prior_tox_a1, prior_tox_a2, n_cohort,
-                          cohort, tite, time_full, poisson_rate, nsim, c_e, c_d, c_stop, c_t,
-                          c_over, cmin_overunder, cmin_mtd, cmin_recom, startup, alloc_rule, early_stop,
-                          nburn, niter, seed=seed)
+  res <- CombIncrease_sim(ndose_a1=ndose_a1, ndose_a2=ndose_a2, p_tox=p_tox, target=target, target_min=target_min, target_max=target_max, prior_tox_a1=prior_tox_a1, prior_tox_a2=prior_tox_a2, n_cohort=n_cohort,
+                          cohort=cohort, tite=tite, time_full=time_full, poisson_rate=poisson_rate, nsim=1, c_e=c_e, c_d=c_d, c_stop=c_stop, c_t=c_t,
+                          c_over=c_over, cmin_overunder=cmin_overunder, cmin_mtd=cmin_mtd, cmin_recom=cmin_recom, startup=startup, alloc_rule=alloc_rule, early_stop=early_stop,
+                          nburn=nburn, niter=niter, seed=seed)
   
   correct <- 0
   if(sum(res$rec_dose)!=100){
