@@ -4,6 +4,12 @@ library(pocrm)
 pocrm.imp <- function(alpha,prior.o,theta,y,combos){
     
   data<-as.matrix(table(combos,y))
+  ##############
+  if(length(data[1,])==1){
+    data <- cbind(data,rep(0,length(data[,1])))
+    colnames(data) <- c(0,1)
+  }
+  ##############
   level<-as.numeric(row.names(data))
   nontox<-as.numeric(data[,1])
   tox<-as.numeric(data[,2])

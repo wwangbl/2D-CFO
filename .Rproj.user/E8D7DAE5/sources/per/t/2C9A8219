@@ -1,17 +1,19 @@
 {
-    "id": "13FE6D6D",
-    "path": "D:/2D-CFO/pocrm.R",
-    "project_path": "pocrm.R",
-    "type": "r_source",
-    "hash": "0",
+    "id": "2C9A8219",
+    "path": "D:/2D-CFO/compare.Rmd",
+    "project_path": "compare.Rmd",
+    "type": "r_markdown",
+    "hash": "1418257729",
     "contents": "",
     "dirty": false,
-    "created": 1665559276574.0,
+    "created": 1665558152945.0,
     "source_on_save": false,
     "relative_order": 4,
     "properties": {
         "source_window_id": "",
-        "Source": "Source"
+        "Source": "Source",
+        "cursorPosition": "318,83",
+        "scrollLine": "0"
     },
     "folds": "",
     "lastKnownWriteTime": 1665557747,

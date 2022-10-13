@@ -6,7 +6,9 @@ output: html_document
 
 ```{r}
 source("2D_CFO_MTD.R")
+source("pocrm.R")
 library(dfcomb)
+library(pocrm)
 
 #Specifiy the possible orderings from Section 3.3.
 orders<-matrix(nrow=6,ncol=15)
@@ -56,7 +58,8 @@ ensemble <- function(phi, p.true, ncohort=12, cohortsize=1, init.level.A=1, init
   ncohort <- ((ncohort*cohortsize) - sum(tns))%/%3 + 1
   
   y <- c(rep(0,(sum(tns)-1)),1)
-  combos <- 
+  combos <- c(tys[,1][tys[,1]!=0],tys[,1][2:length(tys[,1])][tys[,1][2:length(tys[,1])]!=0])
+  a <- matrix(1:15,3,5)
   
   for (i in 1:ncohort){
     
@@ -68,6 +71,9 @@ ensemble <- function(phi, p.true, ncohort=12, cohortsize=1, init.level.A=1, init
     # update results
     tys[cidx.A, cidx.B] <- tys[cidx.A, cidx.B] + sum(cres)
     tns[cidx.A, cidx.B] <- tns[cidx.A, cidx.B] + cohortsize
+    
+    y <- c(y,cres)
+    combos <- c(combos,rep(a[cidx.A, cidx.B]),cohortsize)
     
     cy <- tys[cidx.A, cidx.B]
     cn <- tns[cidx.A, cidx.B]
@@ -130,13 +136,16 @@ ensemble <- function(phi, p.true, ncohort=12, cohortsize=1, init.level.A=1, init
     }
     
     ###################
-    idx.chg.CFO <- make.decision.2dCFO.fn(phi, cys, cns, add.args$alp.prior, add.args$bet.prior, cover.doses)
-    idx.chg.BOIN <- next.comb(phi, tns, tys, c(cidx.A, cidx.B), n.earlystop=100, p.saf=0.6*phi, p.tox=1.4*phi, 
+    idx.CFO <- make.decision.2dCFO.fn(phi, cys, cns, add.args$alp.prior, add.args$bet.prior, cover.doses)
+    idx.BOIN <- next.comb(phi, tns, tys, c(cidx.A, cidx.B), n.earlystop=100, p.saf=0.6*phi, p.tox=1.4*phi, 
                               cutoff.eli=0.95, extrasafe=FALSE, offset=0.05) - c(cidx.A, cidx.B)
-    idx.chg.dfcomb <- CombIncrease_next(ndose.A, ndose.B, phi, target_min=0.2, target_max=0.4, prior_tox_a1, prior_tox_a2, cohortsize, 
+    idx.dfcomb <- CombIncrease_next(ndose.A, ndose.B, phi, target_min=0.2, target_max=0.4, prior_tox_a1, prior_tox_a2, cohortsize, 
                                     final=FALSE, pat_incl=18, dose_adm1=dose1, dose_adm2=dose2, toxicity=toxicity1, c_over=1, 
                                     cmin_overunder=3, cmin_recom=1, early_stop=1, alloc_rule=1) - c(cidx.A, cidx.B)
-    idx.chg.pocrm <- 
+    idx.pocrm <- which(a==pocrm.imp(alpha,prior.o,phi,y,combos)$dose.rec, arr.ind = TRUE) - c(cidx.A, cidx.B)
+    
+    A.idx <- c(idx.CFO[1],idx.BOIN[1],idx.dfcomb[1],idx.pocrm[1])
+    B.idx <- c(idx.CFO[2],idx.BOIN[2],idx.dfcomb[2],idx.pocrm[2])
     
     cidx.A <- cidx.A + idx.chg[1]
     cidx.B <- cidx.B + idx.chg[2]
@@ -226,11 +235,18 @@ alpha<-getwm(orders,skeleton)
 
 #We consider all orders to be equally likely prior to the study.
 prior.o<-rep(1/6,3)
+
+y <- c(0,0,0,1)
+combos <- c(1,1,1,1)
+# data<-as.matrix(table(combos,y))
+# data
+fit <- pocrm.imp(alpha,prior.o,0.3,y,combos)
+fit
 ```
 
 
 ```{r}
-
+fit
 ```
 
 
