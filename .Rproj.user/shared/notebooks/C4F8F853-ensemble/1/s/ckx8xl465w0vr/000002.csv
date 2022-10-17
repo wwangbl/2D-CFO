@@ -20,3 +20,8 @@
 "0",""
 "0","#We consider all orders to be equally likely prior to the study."
 "0","prior.o<-rep(1/6,3)"
+"0",""
+"0","getmode <- function(v) {"
+"0","   uniqv <- unique(v)"
+"0","   uniqv[which.max(tabulate(match(v, uniqv)))]"
+"0","}"
