@@ -77,11 +77,24 @@ ncohort <- ((ncohort*cohortsize) - sum(tns))%/%3 + 1
 
 dose1 <- which(tns==1,arr.ind = T)[,1]
 dose2 <- which(tns==1,arr.ind = T)[,2]
-toxicity1 <- c(rep(0,length(dose1)-1),1)
+if(sum(tys==1)){
+  toxicity1 <- c(rep(0,length(dose1)-1),1)
+  y <- c(rep(0,(sum(tns)-1)),1)
+} else {
+  toxicity1 <- rep(0,length(dose1))
+  y <- rep(0,sum(tns))
+}
 
-y <- c(rep(0,(sum(tns)-1)),1)
-combos <- c(tys[,1][tys[,1]!=0],tys[,1][2:length(tys[,1])][tys[,1][2:length(tys[,1])]!=0])
+#combos <- c(tns[,1][tns[,1]!=0],tns[,1][2:length(tys[,1])][tns[,1][2:length(tns[,1])]!=0])
 a <- matrix(1:15,3,5)
+
+if(sum(tns)<=ndose.A){
+  combos <- a[1:sum(tns),1]
+} else {
+  combos <- a[1:ndose.A,1]
+  combos <- c(combos,a[1,2:(sum(tns)-ndose.A+1)])
+}
+
 
 for (i in 1:ncohort){
   
@@ -95,7 +108,7 @@ for (i in 1:ncohort){
   tns[cidx.A, cidx.B] <- tns[cidx.A, cidx.B] + cohortsize
   
   y <- c(y,cres)
-  combos <- c(combos,rep(a[cidx.A, cidx.B]),cohortsize)
+  combos <- c(combos,rep(a[cidx.A, cidx.B],cohortsize))
   dose1 <- c(dose1,rep(cidx.A,cohortsize))
   dose2 <- c(dose2,rep(cidx.B,cohortsize))
   toxicity1 <- c(toxicity1, cres)
@@ -164,8 +177,9 @@ for (i in 1:ncohort){
   idx.CFO <- make.decision.2dCFO.fn(phi, cys, cns, add.args$alp.prior, add.args$bet.prior, cover.doses)
   idx.BOIN <- next.comb(phi, tns, tys, c(cidx.A, cidx.B))$next_dc - c(cidx.A, cidx.B)
   idx.dfcomb <- CombIncrease_next(ndose.A, ndose.B, phi, target_min=0.2, target_max=0.4, prior_tox_a1, prior_tox_a2, cohortsize, 
-                                  final=FALSE, pat_incl=18, dose_adm1=dose1, dose_adm2=dose2, toxicity=toxicity1, c_over=1, 
-                                  cmin_overunder=3, cmin_recom=1, early_stop=1, alloc_rule=1) - c(cidx.A, cidx.B)
+                                  final=FALSE, pat_incl=sum(tns), dose_adm1=dose1, dose_adm2=dose2, toxicity=toxicity1, c_over=1, 
+                                  cmin_overunder=3, cmin_recom=1, early_stop=1, alloc_rule=1)
+  idx.dfcomb <- c(idx.dfcomb$cdose1 - cidx.A, idx.dfcomb$cdose2 - cidx.B)
   idx.pocrm <- which(a==pocrm.imp(alpha,prior.o,phi,y,combos)$dose.rec, arr.ind = TRUE) - c(cidx.A, cidx.B)
   
   A.idx <- c(idx.CFO[1],idx.BOIN[1],idx.dfcomb[1],idx.pocrm[1])
@@ -174,6 +188,7 @@ for (i in 1:ncohort){
   cidx.A <- cidx.A + getmode(A.idx)
   cidx.B <- cidx.B + getmode(B.idx)
 }
+
 
 if (earlystop==0){
   MTD <- select.mtd.comb(phi, tns, tys)$MTD
@@ -248,8 +263,16 @@ if(sum(tys==1)){
   y <- rep(0,sum(tns))
 }
 
-combos <- c(tns[,1][tns[,1]!=0],tns[,1][2:length(tys[,1])][tns[,1][2:length(tns[,1])]!=0])
+#combos <- c(tns[,1][tns[,1]!=0],tns[,1][2:length(tys[,1])][tns[,1][2:length(tns[,1])]!=0])
 a <- matrix(1:15,3,5)
+
+if(sum(tns)<=ndose.A){
+  combos <- a[1:sum(tns),1]
+} else {
+  combos <- a[1:ndose.A,1]
+  combos <- c(combos,a[1,2:(sum(tns)-ndose.A+1)])
+}
+
 
 for (i in 1:ncohort){
   
@@ -263,7 +286,7 @@ for (i in 1:ncohort){
   tns[cidx.A, cidx.B] <- tns[cidx.A, cidx.B] + cohortsize
   
   y <- c(y,cres)
-  combos <- c(combos,rep(a[cidx.A, cidx.B]),cohortsize)
+  combos <- c(combos,rep(a[cidx.A, cidx.B],cohortsize))
   dose1 <- c(dose1,rep(cidx.A,cohortsize))
   dose2 <- c(dose2,rep(cidx.B,cohortsize))
   toxicity1 <- c(toxicity1, cres)
@@ -345,6 +368,9 @@ for (i in 1:ncohort){
 }
 
 ```
+
+
+
 
 
 

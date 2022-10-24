@@ -5,6 +5,6 @@
 "0","p.true.1 <- rbind(p.trues.1[[1]],p.trues.1[[2]],p.trues.1[[3]])"
 "0",""
 "0","ensemble(target, p.true.1, 20, cohortsize, init.level.A=1, init.level.B=1, add.args=add.args, prior_tox_a1, prior_tox_a2, prior.o, x0, stop, tox.range, seed=1)"
-"2","Error in CombIncrease_next(ndose.A, ndose.B, phi, target_min = 0.2, target_max = 0.4,  : 
-  The entered vector of observed toxicities is of wrong length.
+"2","Error in ensemble(target, p.true.1, 20, cohortsize, init.level.A = 1,  : 
+  could not find function ""ensemble""
 "
