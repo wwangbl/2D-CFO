@@ -1,0 +1,42 @@
+---
+title: "pipe"
+output: html_document
+date: "2022-11-26"
+---
+
+```{r}
+library(pipe.design)
+```
+
+```{r}
+## Reproducing Figure 5 from Mander and Sweeting, Statistics in Medicine 2015.
+## The true probability of DLT for a 6x6 grid of dose combinations 
+## (Scenario 3 from Mander and Sweeting, Statistics in Medicine 2015)
+pi <-matrix(c(0.02,0.10,0.20,0.30,0.35,0.45,0.06,0.14,0.24,0.34,0.39,0.49,0.12,0.20,
+0.30,0.40,0.45,0.55,0.17,0.25,0.35,0.45,0.50,0.60,0.22,0.30,0.40,0.50,0.60,0.70,0.30,
+0.38,0.48,0.58,0.68,0.78),nrow=6,ncol=6)
+## Using a weak prior with prior sample size 1/36 for each dose combination and prior
+## median of Scenario 1
+prior.med<-matrix(c(0.02,0.03,0.06,0.10,0.18,0.23,0.03,0.05,0.09,0.13,0.21,0.27,0.06,
+0.09,0.14,0.18,0.26,0.30,0.11,0.14,0.18,0.23,0.30,0.36,0.18,0.21,0.26,0.30,0.39,0.44,
+0.23,0.27,0.3,0.36,0.44,0.49),nrow=6,ncol=6)
+## Using a neighbouring escalation constraint
+## Selecting the closest admissible doses
+## Using a safety constraint with epsilon = 0.8
+
+```
+
+```{r}
+## Simulating a single trial with sample size of 40, cohort size 2 
+## and target toxicity of 0.3, using true probabilities of toxicity pi
+## Not run: 
+set.seed(700)
+example<-pipe.design(N=60,S=1,c=3,theta=0.3,pi=pi,prior.med=prior.med,
+prior.ss=matrix(1/36,ncol=6,nrow=6),strategy="ss",constraint="neighbouring",
+epsilon=0.8,admis="closest",alternate=FALSE)
+example
+plot(example)
+```
+
+
+
