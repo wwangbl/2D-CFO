@@ -1,0 +1,3 @@
+"0","for (i in 1:100) {"
+"0","  res.ensemble <- ensemble(target, p.true.1, 20, cohortsize, init.level.A=1, init.level.B=1, add.args=add.args, prior_tox_a1, prior_tox_a2, prior.o, x0, stop, tox.range, seed=seeds[i])"
+"0","}"

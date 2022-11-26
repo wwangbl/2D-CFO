@@ -1,0 +1,7 @@
+"0","for (i in 1:100) {"
+"0","  res <- CFO.simu.fn(target, p.true.2, prelim=0, ncohort=46, cohortsize=3, init.level.A, init.level.B, add.args=add.args, seed=i)"
+"0","  cat(i)"
+"0","}"
+"2","Error in integrate(fn.max, lower = 0, upper = 1) : 
+  the integral is probably divergent
+"

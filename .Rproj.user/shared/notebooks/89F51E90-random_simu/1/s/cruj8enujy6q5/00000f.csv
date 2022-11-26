@@ -1,0 +1,8 @@
+"0","set.seed(1)"
+"0","p <- random(3,0.01)"
+"0","res.CFO <- CFO.simu.fn(target, p, prelim=1, ncohort, cohortsize, init.level.A, init.level.B, add.args=add.args, seed=1)"
+"0","sum(res.CFO$dose.ns)"
+"1","[1]"
+"1"," 60"
+"1","
+"

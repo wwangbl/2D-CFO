@@ -95,7 +95,7 @@ for (i in 1:ncohort){
   tns[cidx.A, cidx.B] <- tns[cidx.A, cidx.B] + cohortsize
   
   y <- c(y,cres)
-  combos <- c(combos,rep(a[cidx.A, cidx.B]),cohortsize)
+  combos <- c(combos,rep(a[cidx.A, cidx.B],cohortsize))
   dose1 <- c(dose1,rep(cidx.A,cohortsize))
   dose2 <- c(dose2,rep(cidx.B,cohortsize))
   toxicity1 <- c(toxicity1, cres)
@@ -263,7 +263,7 @@ for (i in 1:ncohort){
   tns[cidx.A, cidx.B] <- tns[cidx.A, cidx.B] + cohortsize
   
   y <- c(y,cres)
-  combos <- c(combos,rep(a[cidx.A, cidx.B]),cohortsize)
+  combos <- c(combos,rep(a[cidx.A, cidx.B],cohortsize))
   dose1 <- c(dose1,rep(cidx.A,cohortsize))
   dose2 <- c(dose2,rep(cidx.B,cohortsize))
   toxicity1 <- c(toxicity1, cres)
