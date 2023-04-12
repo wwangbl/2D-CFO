@@ -9,10 +9,6 @@
 
 "
 "0","source(""pocrm.R"")"
-"2","载入需要的程辑包：dfcrm
-"
-"2","载入需要的程辑包：nnet
-"
 "0","library(parallel)"
 "0",""
 "0","target <- 0.30"

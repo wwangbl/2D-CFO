@@ -41,7 +41,7 @@ pocrm.imp <- function(alpha,prior.o,theta,y,combos){
 pocrm.sim <- function(r,alpha,prior.o,x0,n,theta,seed){
   set.seed(seed)
   y <- combos <- c()
-  correct <- npercent <- ntox <- 0
+  correct <- npercent <- ntox <- ptoxic <- 0
 
   # preliminary stage
   # for (x in x0) {
@@ -114,5 +114,12 @@ pocrm.sim <- function(r,alpha,prior.o,x0,n,theta,seed){
   }
   npercent <- npercent/n
   
-  list(correct=correct, npercent=npercent, ntox=ntox)
+  for (i in 1:length(r)) {
+    if(r[i]>theta){
+      ptoxic <- ptoxic + length(which(combos==i))
+    }
+  }
+  ptoxic <- ptoxic/n
+  
+  list(correct=correct, npercent=npercent, ntox=ntox, ptoxic=ptoxic)
 }

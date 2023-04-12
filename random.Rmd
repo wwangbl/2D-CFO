@@ -27,23 +27,6 @@ rand <- function(nMTD,e){
 
 
 ```{r}
-for (i in 1:10000) {
-  m <- ran()
-  cat(i)
-  # for (j in 1:3) {
-  #   if(is.unsorted(m[j,])){
-  #     cat("case found")
-  #   }
-  # }
-  # for (k in 1:5) {
-  #   if(is.unsorted(m[,k])){
-  #     cat("case found")
-  #   }
-  # }
-}
-```
-
-```{r}
 random <- function(nMTD,e=0.05){
   i <- 0
   while (i==0) {
@@ -55,7 +38,6 @@ random <- function(nMTD,e=0.05){
 }
 ```
 
-########
 
 ```{r}
 runif_gap <- function(n,min, max, e){
@@ -221,6 +203,66 @@ max.integral <- function(tns, tys, ndose.A, ndose.B, phi=0.3, p_min=0.2, p_max=0
   return(which(p==max(p),arr.ind = T)[1,])
 }
 ```
+
+
+```{r}
+gen.rand.doses <- function(ndose, target, mu1=0.55, mu2=0.55, inv.fn=qnorm, fn=pnorm, MTD=NA){
+    sigma0 <- 0.05
+    sigma1 <- 0.35
+    sigma2 <- 0.35
+    raw.p.trues <- rep(0, ndose)
+    if (is.na(MTD)){
+        mtd.level <- sample.int(ndose, 1)
+    }else{
+        mtd.level <- MTD
+    }
+    
+    raw.p.trues[mtd.level] <- rnorm(1, inv.fn(target), sigma0)
+    
+    if (mtd.level != 1){
+        eps.minus <- rnorm(1, mu1, sigma1)
+        if (raw.p.trues[mtd.level] > inv.fn(target)){
+            dlt <- raw.p.trues[mtd.level] - inv.fn(2*target-fn(raw.p.trues[mtd.level]))
+        }else{
+            dlt <- 0 
+        }
+        raw.p.trues[mtd.level-1] <- raw.p.trues[mtd.level] - (dlt +  eps.minus**2)
+    }
+    
+    if (mtd.level != ndose){
+        eps.plus <- rnorm(1, mu2, sigma2)
+        if (raw.p.trues[mtd.level] < inv.fn(target)){
+            dlt <- inv.fn(2*target-fn(raw.p.trues[mtd.level])) - raw.p.trues[mtd.level]
+        }else{
+            dlt <- 0 
+        }
+        raw.p.trues[mtd.level+1] <- raw.p.trues[mtd.level] + (dlt +  eps.plus**2)
+    }
+    
+    if ((mtd.level-2)>0){
+        for (i in (mtd.level-2):1){
+           eps.minus <- rnorm(1, mu1, sigma1)
+           raw.p.trues[i]  <- raw.p.trues[i+1] - eps.minus**2
+        }
+    }
+    if ((mtd.level+2)<=ndose){
+        for (j in (mtd.level+2):ndose){
+           eps.plus <- rnorm(1, mu2, sigma2)
+           raw.p.trues[j] <- raw.p.trues[j-1] + eps.plus**2
+        }
+    }
+    p.trues <- fn(raw.p.trues)
+    list(p.trues=p.trues, mtd.level=mtd.level)
+}
+
+```
+
+```{r}
+gen.rand.doses(ndose=15, target=0.3, mu1=0.15, mu2=0.15, inv.fn=qnorm, fn=pnorm, MTD=NA)
+```
+
+
+
 
 
 

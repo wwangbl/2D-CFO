@@ -13,6 +13,15 @@
 "
 "2","载入需要的程辑包：nnet
 "
+"2","
+载入程辑包：‘pocrm’
+
+"
+"2","The following objects are masked _by_ ‘.GlobalEnv’:
+
+    pocrm.imp, pocrm.sim
+
+"
 "0","library(dfcomb)"
 "0","library(pocrm)"
 "0","library(parallel)"

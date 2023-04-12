@@ -1,0 +1,2 @@
+﻿[WksPlotMenuMRUList]
+Version = 2

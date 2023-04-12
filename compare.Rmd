@@ -150,120 +150,55 @@ p <- array(c(p.true.1,p.true.2,p.true.3,p.true.4,p.true.5,p.true.6,p.true.7,p.tr
 ```
 
 
-# ```{r}
-# 
-# simulate1 <- function(i){
-# 
-#   res.CFO <- CFO.simu.fn(target, p.true.1, ncohort, cohortsize, init.level.A, init.level.B, add.args=add.args, seed=seeds[i])
-#   
-#   res.BOIN <- get.oc.comb(target, p.true.1, ncohort, cohortsize, ntrial=1, seed=seeds[i])
-# 
-#   
-#   res.dfcomb <- dfcomb.simu.fn(ndose_a1=3, ndose_a2=5, p_tox=p.true.1, target=0.30, target_min=0.20, target_max=0.40, 
-#                                prior_tox_a1=prior_tox_a1, prior_tox_a2=prior_tox_a2, n_cohort=20, cohort=3, tite=FALSE, 
-#                                nsim=1, c_over=1, cmin_overunder=3, cmin_recom=1, startup=1, alloc_rule=1, early_stop=1, seed=seeds[i])
-# 
-#   
-#   res <- c(res.CFO$correct,
-#            as.numeric(sub("%","",res.CFO$npercent))/100,
-#            res.CFO$ntox,
-#            as.numeric(sub("%","",res.BOIN$pcs))/100,
-#            as.numeric(sub("%","",res.BOIN$npercent))/100,
-#            res.BOIN$totaltox,
-#            res.dfcomb$correct,
-#            as.numeric(sub("%","",res.dfcomb$npercent))/100,
-#            res.dfcomb$ntox)
-#   return(res)
-# }
-# 
-# r <- mclapply(1:5000, simulate1, mc.cores = 10)
-# results <- Reduce("+", r)
-# results/5000
-# ```
-
-
-```{r}
-simulate <- function(i){
-
-  res.ensemble <- ensemble(target, p.true.1, 20, cohortsize, init.level.A=1, init.level.B=1, add.args=add.args, prior_tox_a1, prior_tox_a2, prior.o, x0, stop, tox.range, seed=seeds[i])
-  
-  res <- c(res.ensemble$correct,
-          as.numeric(sub("%","",res.ensemble$npercent))/100,
-          res.ensemble$ntox)
-  return(res)
- }
- 
- 
-r <- mclapply(1:5000, simulate, mc.cores = 40)
-results <- Reduce("+", r)
-results/5000
-```
-
-
-
-
-
-```{r}
-res <- CFO.simu.fn(target, p.true.1, prelim=0, 20, cohortsize, init.level.A, init.level.B, add.args=add.args, seed=2)
-tns <- res$dose.ns
-tys <- res$DLT.ns
-```
-
-```{r}
-for (i in 1:100) {
-  res <- CFO.simu.fn(target, p.true.2, prelim=0, ncohort=46, cohortsize=3, init.level.A, init.level.B, add.args=add.args, seed=i)
-  cat(i)
-}
-```
-
-
-```{r}
-simulate <- function(i){
-  
-  p <- random(phi=target, nA=3, nB=5, e=0.05, orders=order, nMTD=3, seed=seeds[i])
- 
-  res.CFO <- CFO.simu.fn(target, p, ncohort, cohortsize, init.level.A, init.level.B, add.args=add.args, seed=seeds[i])
-  
-  res.BOIN <- get.oc.comb(target, p, ncohort, cohortsize, ntrial=1, seed=seeds[i])
-  
-  
-  res <- c(res.CFO$correct,
-          as.numeric(sub("%","",res.CFO$npercent))/100,
-          res.CFO$ntox,
-          as.numeric(sub("%","",res.BOIN$pcs))/100,
-          as.numeric(sub("%","",res.BOIN$npercent))/100,
-          res.BOIN$totaltox)
-  return(res)
- }
- 
- 
- r <- mclapply(1:5000, simulate, mc.cores = 10)
- results <- Reduce("+", r)
- results/5000
-```
 
  
 ```{r}
+for (j in 1:14) {
+  
+
 simulate <- function(i){
  
-   res.CFO <- CFO.simu.fn(target, p.true.1, prelim=0, ncohort, cohortsize, init.level.A, init.level.B, add.args=add.args, seed=seeds[i])
+   res.CFO <- CFO.simu.fn(target, p[,,j], prelim=0, ncohort, cohortsize, init.level.A, init.level.B, add.args=add.args, seed=seeds[i])
    
-   res.BOIN <- get.oc.comb(target, p.true.1, ncohort, cohortsize, ntrial=1, seed=seeds[i])
+   res.BOIN <- boin.simu.fn(target, p[,,j], ncohort, cohortsize, seed=seeds[i])
  
    
    res <- c(res.CFO$correct,
             as.numeric(sub("%","",res.CFO$npercent))/100,
             res.CFO$ntox,
-            as.numeric(sub("%","",res.BOIN$pcs))/100,
+            as.numeric(sub("%","",res.CFO$ptoxic))/100,
+            res.BOIN$correct,
             as.numeric(sub("%","",res.BOIN$npercent))/100,
-            res.BOIN$totaltox)
+            res.BOIN$ntox,
+            as.numeric(sub("%","",res.BOIN$ptoxic))/100)
    return(res)
  }
  
  
  r <- mclapply(1:5000, simulate, mc.cores = 40)
  results <- Reduce("+", r)
- results/5000
+ cat(results/5000, '\n')
+}
+```
+
+
+```{r}
+for (i in 1:20) {
+     res.CFO <- CFO.simu.fn(target, p[,,1], prelim=0, ncohort, cohortsize, init.level.A, init.level.B, add.args=add.args, seed=seeds[i])
+   
+   res.BOIN <- boin.simu.fn(target, p[,,1], ncohort, cohortsize, seed=seeds[i])
+ 
+   
+   res <- c(res.CFO$correct,
+            as.numeric(sub("%","",res.CFO$npercent))/100,
+            res.CFO$ntox,
+            as.numeric(sub("%","",res.CFO$ptoxic))/100,
+            res.BOIN$correct,
+            as.numeric(sub("%","",res.BOIN$npercent))/100,
+            res.BOIN$ntox,
+            as.numeric(sub("%","",res.BOIN$ptoxic))/100)
+   cat(res,'\n')
+}
 ```
 
 
@@ -284,9 +219,9 @@ skeleton<-getprior(0.03,0.30,13,15)
 
 #Initial guesses of toxicity probabilities for each ordering.
 alpha<-getwm(orders,skeleton)
-
+  
 #We consider all orders to be equally likely prior to the study.
-prior.o<-rep(1/6,3)
+prior.o<-rep(1/6,6)
 
 #Initial escalation in Stage 1 proceeds according to the zones in Figure 1.
 #Single patient cohorts are used.
@@ -303,6 +238,8 @@ theta<-0.30
 
 #Definition of acceptable DLT rates
 tox.range<-0.05
+
+#pocrm.sim(r=c(p.true.1),alpha=alpha,prior.o=prior.o,x0=x0,stop=61,n=60,theta=0.3, nsim=1,tox.range=tox.range)
 ```
 
 
@@ -315,54 +252,52 @@ simulate <- function(i){
    res.dfcomb <- dfcomb.simu.fn(ndose_a1=3, ndose_a2=5, p_tox=p[,,j], target=0.30, target_min=0.20, target_max=0.40, 
                                 prior_tox_a1=prior_tox_a1, prior_tox_a2=prior_tox_a2, n_cohort=20, cohort=3, tite=FALSE, 
                                 time_full=0, poisson_rate=0, c_e=0.85, c_d=0.45, c_stop=0.95, c_t=0.5,
-                                c_over=0.25, cmin_overunder=2, cmin_mtd=3, cmin_recom=1, startup=0, alloc_rule=1, early_stop=1,
+                                c_over=0.25, cmin_overunder=2, cmin_mtd=3, cmin_recom=1, startup=1, alloc_rule=1, early_stop=1,
                                 nburn=2000, niter=5000, seed=seeds[i])
  
    
    res <- c(res.dfcomb$correct,
             res.dfcomb$npercent,
-            res.dfcomb$ntox)
+            res.dfcomb$ntox,
+            res.dfcomb$ptoxic)
    return(res)
  }
  
  
  r <- mclapply(1:5000, simulate, mc.cores = 40)
  results <- Reduce("+", r)
- cat(results/5000)
- cat('\n')
+ cat(results/5000, '\n')
 }
 ```
 
+
 ```{r}
-for (j in 10:30) {
+for (j in 1:14) {
 simulate <- function(i){
    
-   res.pocrm <- pocrm.sim(c(p.true.2), alpha, prior.o, x0, 3*j, theta, seed=seeds[i])
- 
+   res.pocrm <- pocrm.sim(c(p[,,j]), alpha, prior.o, x0, 60, theta, seed=seeds[i])
+    
    
    res <- c(res.pocrm$correct,
             res.pocrm$npercent,
-            res.pocrm$ntox)
+            res.pocrm$ntox,
+            res.pocrm$ptoxic)
    return(res)
  }
  
  
  r <- mclapply(1:5000, simulate, mc.cores = 40)
  results <- Reduce("+", r)
- cat(results/5000)
- cat('\n')
+ cat(results/5000, '\n')
 }
 ```
 
-```{r}
-for (i in 1:100) {
-  res.dfcomb <- dfcomb.simu.fn(ndose_a1=3, ndose_a2=5, p_tox=p.true.2, target=0.30, target_min=0.20, target_max=0.40, 
-                                prior_tox_a1=prior_tox_a1, prior_tox_a2=prior_tox_a2, n_cohort=10, cohort=3, tite=FALSE, 
-                                time_full=0, poisson_rate=0, c_e=0.85, c_d=0.45, c_stop=0.95, c_t=0.5,
-                                c_over=0.25, cmin_overunder=2, cmin_mtd=3, cmin_recom=1, startup=0, alloc_rule=1, early_stop=1,
-                                nburn=2000, niter=5000, seed=seeds[i])
-}
-```
+
+
+
+
+
+
 
 
 

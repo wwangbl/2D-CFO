@@ -162,9 +162,9 @@ make.decision.1dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
       return(2)
     }else  if (is.na(cys[1]) & (!(cover.doses[3]==1))){
       gam2 <- optim.gamma.fn(cns[2], cns[3], phi, "R", alp.prior, bet.prior)$gamma
-      # message(paste('gam2: ', gam2))
+      message(paste('gam2: ', gam2))
       OR.v2 <- OR.values(phi, cys[2], cns[2], cys[3], cns[3], alp.prior, bet.prior, type="R")
-      # message(paste('OR.v2: ', OR.v2))
+      message(paste('OR.v2: ', OR.v2))
       if (OR.v2>gam2){
         return(3)
       }else{
@@ -172,9 +172,9 @@ make.decision.1dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
       }
     }else  if (is.na(cys[3]) | (cover.doses[3]==1)){
       gam1 <- optim.gamma.fn(cns[1], cns[2], phi, "L", alp.prior, bet.prior)$gamma
-      # message(paste('gam1: ', gam1))
+      message(paste('gam1: ', gam1))
       OR.v1 <- OR.values(phi, cys[1], cns[1], cys[2], cns[2], alp.prior, bet.prior, type="L")
-      # message(paste('OR.v1: ', OR.v1))
+      message(paste('OR.v1: ', OR.v1))
       if (OR.v1>gam1){
         return(1)
       }else{
@@ -184,10 +184,10 @@ make.decision.1dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
     }else  if (!(is.na(cys[1]) | is.na(cys[3]) | cover.doses[3]==1)){
       gam1 <- optim.gamma.fn(cns[1], cns[2], phi, "L", alp.prior, bet.prior)$gamma
       gam2 <- optim.gamma.fn(cns[2], cns[3], phi, "R", alp.prior, bet.prior)$gamma
-      # message(paste('gam1,gam2: ',gam1,gam2))
+      message(paste('gam1,gam2: ',gam1,gam2))
       OR.v1 <- OR.values(phi, cys[1], cns[1], cys[2], cns[2], alp.prior, bet.prior, type="L")
       OR.v2 <- OR.values(phi, cys[2], cns[2], cys[3], cns[3], alp.prior, bet.prior, type="R")
-      # message(paste('OR.v1,OR.v2: ',OR.v1,OR.v2))
+      message(paste('OR.v1,OR.v2: ',OR.v1,OR.v2))
       v1 <- OR.v1 > gam1
       v2 <- OR.v2 > gam2
       if (v1 & !v2){
@@ -210,14 +210,14 @@ make.decision.2dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
   # message(paste('cys[2,]: ', cys[2,]))
   # message(paste('cns[2,]: ', cns[2,]))
   idx.chg.A <- make.decision.1dCFO.fn(phi, cys[2,], cns[2,], alp.prior, bet.prior, cover.doses[2,]) - 2
-  # message(paste('decision A: ',idx.chg.A))
+  message(paste('decision A: ',idx.chg.A))
   # vertical direction
   # message(paste('cys[,2]: ', cys[,2]))
   # message(paste('cns[,2]: ', cns[,2]))
   # message(paste('alp, bet: ', alp.prior, bet.prior))
   # message(paste('cover.doses: ',cover.doses[,2]))
   idx.chg.B <- make.decision.1dCFO.fn(phi, cys[,2], cns[,2], alp.prior, bet.prior, cover.doses[,2]) - 2
-  # message(paste('decision B: ',idx.chg.B))
+  message(paste('decision B: ',idx.chg.B))
   
   if (idx.chg.A == 1 & idx.chg.B == 1){
     ### horizontal and vertical only
@@ -225,8 +225,8 @@ make.decision.2dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
     OR.R <- OR.values(phi, cys[2,2], cns[2,2], cys[2,3], cns[2,3], alp.prior, bet.prior, type="R")
     OR.U <- OR.values(phi, cys[2,2], cns[2,2], cys[3,2], cns[3,2], alp.prior, bet.prior, type="R")
     
-    # message(paste('OR.R: ',OR.R))
-    # message(paste('OR.U: ',OR.U))
+    message(paste('OR.R: ',OR.R))
+    message(paste('OR.U: ',OR.U))
     
     if (OR.R == OR.U){
       rand <- rbinom(1,1,0.5)
@@ -256,6 +256,10 @@ make.decision.2dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
     } else {
       OR.L <- OR.values(phi, cys[2,2], cns[2,2], cys[2,1], cns[2,1], alp.prior, bet.prior, type="L")
       OR.D <- OR.values(phi, cys[2,2], cns[2,2], cys[1,2], cns[1,2], alp.prior, bet.prior, type="L")
+      
+      message(paste('OR.L: ',OR.L))
+      message(paste('OR.D: ',OR.D))
+      
       if (OR.L == OR.D){
         rand <- rbinom(1,1,0.5)
         if(rand == 0){
@@ -301,13 +305,14 @@ make.decision.2dCFO.fn <- function(phi, cys, cns, alp.prior, bet.prior, cover.do
 
 }
   
-  
-  overdose.fn <- function(phi, add.args=list()){
+
+overdose.fn <- function(phi, add.args=list()){
   y <- add.args$y
   n <- add.args$n
   alp.prior <- add.args$alp.prior
   bet.prior <- add.args$bet.prior
   pp <- post.prob.fn(phi, y, n, alp.prior, bet.prior)
+  # message(pp)
   if ((pp >= 0.95) & (add.args$n>=3)){
     return(TRUE)
   }else{
@@ -438,12 +443,12 @@ CFO.simu.fn <- function(phi, p.true, prelim=0, ncohort=20, cohortsize=1, init.le
       cohorts.left <- ((ncohort*cohortsize) - sum(tns))%/%3 + 1
     }
   }
-
+  
   
   
   for (i in 1:cohorts.left){
-    # message(paste(i, '-th step:'))
-    # message(paste('cidx (A,B): (', cidx.A, ',', cidx.B, ')'))
+    message(paste(i, '-th cohort:'))
+    message(paste('cidx (A,B): (', cidx.A, ',', cidx.B, ')'))
     
     pc <- p.true[cidx.A, cidx.B] 
     
@@ -462,6 +467,7 @@ CFO.simu.fn <- function(phi, p.true, prelim=0, ncohort=20, cohortsize=1, init.le
       }
     } else {
       cres <- rbinom(cohortsize, 1, pc)
+      # message(paste('#DLT: ', sum(cres)))
       tys[cidx.A, cidx.B] <- tys[cidx.A, cidx.B] + sum(cres)
       tns[cidx.A, cidx.B] <- tns[cidx.A, cidx.B] + cohortsize
     }
@@ -473,27 +479,28 @@ CFO.simu.fn <- function(phi, p.true, prelim=0, ncohort=20, cohortsize=1, init.le
     add.args <- c(list(y=cy, n=cn, tys=tys, tns=tns, cidx.A=cidx.A, cidx.B=cidx.B), add.args)
     
     # quick escalation
-    if (sum(tys)==0){
-      if (cidx.A == ndose.A & cidx.B != ndose.B){
-        cidx.B <- cidx.B +1
-      } else if (cidx.A != ndose.A & cidx.B == ndose.B){
-        cidx.A <- cidx.A +1
-      } else if (cidx.A != ndose.A & cidx.B != ndose.B){
-        rand <- rbinom(1,1,0.5)
-        if(rand == 0){
-          cidx.A <- cidx.A + 1
-        } else {
-          cidx.B <- cidx.B + 1
-        }
-      } else {
-        next
-      }
-      next
-    }
-    
-    # if (overdose.fn(phi, add.args)){
-    #   tover.doses[cidx.A:ndose.A, cidx.B:ndose.B] <- 1
+    # if (sum(tys)==0){
+    #   if (cidx.A == ndose.A & cidx.B != ndose.B){
+    #     cidx.B <- cidx.B +1
+    #   } else if (cidx.A != ndose.A & cidx.B == ndose.B){
+    #     cidx.A <- cidx.A +1
+    #   } else if (cidx.A != ndose.A & cidx.B != ndose.B){
+    #     rand <- rbinom(1,1,0.5)
+    #     if(rand == 0){
+    #       cidx.A <- cidx.A + 1
+    #     } else {
+    #       cidx.B <- cidx.B + 1
+    #     }
+    #   } else {
+    #     next
+    #   }
+    #   next
     # }
+    
+    if (overdose.fn(phi, add.args)){
+      tover.doses[cidx.A:ndose.A, cidx.B:ndose.B] <- 1
+    }
+
     
     if (tover.doses[1,1] == 1){
       earlystop <- 1
@@ -554,6 +561,7 @@ CFO.simu.fn <- function(phi, p.true, prelim=0, ncohort=20, cohortsize=1, init.le
     cidx.B <- cidx.B + idx.chg[2]
   }
   
+  est_p <- select.mtd.comb(phi, tns, tys, boundMTD=TRUE)
   if (earlystop==0){
      MTD <- select.mtd.comb(phi, tns, tys)$MTD
     # p <- cross.sampling(phi, ndose.A, ndose.B, tys, tns, n=100, lower=0.2, upper=0.4)
@@ -568,22 +576,30 @@ CFO.simu.fn <- function(phi, p.true, prelim=0, ncohort=20, cohortsize=1, init.le
     correct <- 0
   } else if (length(MTD)!=2){
     correct <- 0
-  #}else if (p.true[MTD[1],MTD[2]]==phi){
-  }else if (abs(p.true[MTD[1],MTD[2]]-phi)<=0.1){
+  }else if (p.true[MTD[1],MTD[2]]==phi){
     correct <- 1
   }
 
   npercent <- 0
   for (j in 1:ndose.A) {
     for (k in 1:ndose.B) {
-      #if (p.true[j,k]==phi){
-      if (abs(p.true[j,k]-phi)<=0.1){
+      if (p.true[j,k]==phi){
         npercent <- npercent + tns[j,k]
       }
     }
   }
   npercent <- percent(npercent/(ncohort*cohortsize))
-  list(MTD=MTD, dose.ns=tns, DLT.ns=tys, p.true=p.true, target=phi, over.doses=tover.doses, correct=correct, npercent=npercent, ntox=sum(tys))
+  
+  ptoxic <- 0
+  for (j in 1:ndose.A) {
+    for (k in 1:ndose.B) {
+      if (p.true[j,k]>phi){
+        ptoxic <- ptoxic + tns[j,k]
+      }
+    }
+  }
+  ptoxic <- percent(ptoxic/(ncohort*cohortsize))
+  list(MTD=MTD, dose.ns=tns, DLT.ns=tys, p.true=p.true, target=phi, over.doses=tover.doses, correct=correct, npercent=npercent, ptoxic=ptoxic, ntox=sum(tys), est_p=est_p)
 }
 
 
@@ -744,7 +760,7 @@ boin.simu.fn = function(target, p.true, ncohort, cohortsize, seed){
     correct <- 0
   } else {
     MTD <- which(res$selpercent == 100, arr.ind = T)
-    if(abs(p.true[MTD[1],MTD[2]]-target)<=0.1){
+    if(p.true[MTD[1],MTD[2]]==target){
       correct <- 1
     }
   }
@@ -752,13 +768,24 @@ boin.simu.fn = function(target, p.true, ncohort, cohortsize, seed){
   npercent <- 0
   for (j in 1:length(p.true[,1])) {
     for (k in 1:length(p.true[1,])) {
-      if (abs(p.true[j,k]-target)<=0.1){
+      if (p.true[j,k]==target){
         npercent <- npercent + res$npatients[j,k]
       }
     }
   }
   npercent <- percent(npercent/(ncohort*cohortsize))
-  list(correct=correct, npercent=npercent)
+  
+  ptoxic <- 0
+  for (j in 1:length(p.true[,1])) {
+    for (k in 1:length(p.true[1,])) {
+      if (p.true[j,k]>target){
+        ptoxic <- ptoxic + res$npatients[j,k]
+      }
+    }
+  }
+  ptoxic <- percent(ptoxic/(ncohort*cohortsize))
+  
+  list(correct=correct, npercent=npercent, ntox=res$totaltox, ptoxic=ptoxic)
 }
 
 dfcomb.simu.fn = function(ndose_a1, ndose_a2, p_tox, target, target_min, target_max, prior_tox_a1, prior_tox_a2, n_cohort,
@@ -776,8 +803,7 @@ dfcomb.simu.fn = function(ndose_a1, ndose_a2, p_tox, target, target_min, target_
     correct <- 0
   } else {
     MTD <- which(res$rec_dose == 100, arr.ind = T)
-    #if(p_tox[MTD[1],MTD[2]]==target){
-    if(abs(p_tox[MTD[1],MTD[2]]-target)<=0.1){
+    if(p_tox[MTD[1],MTD[2]]==target){
       correct <- 1
     }
   }
@@ -789,219 +815,23 @@ dfcomb.simu.fn = function(ndose_a1, ndose_a2, p_tox, target, target_min, target_
       }
     }
   }
-  npercent <- npercent/(ncohort*cohort)
-  list(correct=correct, npercent=npercent, ntox=sum(res$n_tox_dose))
-}
-
-
-pocrm.simu.fn = function(r, alpha, prior.o, x0, stop, n, theta, tox.range, seed=1){
-  set.seed(seed)
-  fit <- pocrm.sim(r=r,alpha=alpha,prior.o=prior.o,x0=x0,stop=stop,n=n,theta=theta, nsim=1,tox.range=tox.range)
-  # message(fit$MTD.selection)
-  # MTD <- which(fit$MTD.selection!=0)
-  # message(MTD)
-  correct <- 0
-  if (length(fit$MTD.selection)==0){
-    correct <- 0
-  } else {
-    for (i in 1:length(fit$MTD.selection)){
-      #if (r[fit$MTD.selection]==theta){
-      if (abs(r[fit$MTD.selection]-theta)<=0.1){
-        correct <- correct + 1
-      }
-    }
-    correct <- correct/length(fit$MTD.selection)
-  }
+  npercent <- npercent/(n_cohort*cohort)
   
-  npercent <- sum(fit$patient.allocation[which(fit$true.prob==theta)])
-  ntox <- fit$percent.DLT*n
-  
-  list(correct=correct, npercent=npercent, ntox=ntox)
-}
-
-
-# pocrm.simu.fn = function(r, alpha, prior.o, x0, stop, n, theta, tox.range, seed=1){
-#   set.seed(seed)
-#   fit <- pocrm.sim(r=r,alpha=alpha,prior.o=prior.o,x0=x0,stop=stop,n=n,theta=theta, nsim=2,tox.range=tox.range)
-#   MTD <- which(fit$MTD.selection!=0)
-#   correct <- 0
-#   if (length(MTD)==0){
-#     correct <- 0
-#   } else {
-#     for (i in 1:length(MTD)){
-#       if (fit$true.prob[MTD[i]]==theta){
-#         correct <- correct + 1
-#       }
-#     }
-#     correct <- correct/length(MTD)
-#   }
-#   
-#   npercent <- sum(fit$patient.allocation[which(fit$true.prob==theta)])
-#   ntox <- fit$percent.DLT*n
-#   
-#   list(correct=correct, npercent=npercent, ntox=ntox)
-# }
-
-
-ensemble <- function(phi, p.true, ncohort=12, cohortsize=1, init.level.A=1, init.level.B=1, add.args=list(), prior_tox_a1, prior_tox_a2, prior.o, x0, stop, tox.range, seed=NULL){
-  
-  set.seed(seed)
-  earlystop <- 0
-  ndose.A <- length(p.true[,1])
-  ndose.B <- length(p.true[1,])
-  cidx.A <- init.level.A
-  cidx.B <- init.level.B
-  
-  tys <- matrix(0, ndose.A, ndose.B) # number of responses for different doses.
-  tns <- matrix(0, ndose.A, ndose.B) # number of subject for different doses.
-  tover.doses <- matrix(0, ndose.A, ndose.B) # Whether each dose is overdosed or not, 1 yes
-  
-  pre <- preliminary(p.true, ndose.A, ndose.B, tys, tns, seed)
-  cidx.A <- pre$position[1]
-  cidx.B <- pre$position[2]
-  tys <- pre$tys
-  tns <- pre$tns
-  ncohort <- ((ncohort*cohortsize) - sum(tns))%/%3 + 1
-  
-  dose1 <- which(tns==1,arr.ind = T)[,1]
-  dose2 <- which(tns==1,arr.ind = T)[,2]
-  if(sum(tys==1)){
-    toxicity1 <- c(rep(0,length(dose1)-1),1)
-    y <- c(rep(0,(sum(tns)-1)),1)
-  } else {
-    toxicity1 <- rep(0,length(dose1))
-    y <- rep(0,sum(tns))
-  }
-  
-  #combos <- c(tns[,1][tns[,1]!=0],tns[,1][2:length(tys[,1])][tns[,1][2:length(tns[,1])]!=0])
-  a <- matrix(1:15,3,5)
-  
-  if(sum(tns)<=ndose.A){
-    combos <- a[1:sum(tns),1]
-  } else {
-    combos <- a[1:ndose.A,1]
-    combos <- c(combos,a[1,2:(sum(tns)-ndose.A+1)])
-  }
-  
-  
-  for (i in 1:ncohort){
-    
-    pc <- p.true[cidx.A, cidx.B] 
-    
-    # sample from current dose
-    cres <- rbinom(cohortsize, 1, pc)
-    
-    # update results
-    tys[cidx.A, cidx.B] <- tys[cidx.A, cidx.B] + sum(cres)
-    tns[cidx.A, cidx.B] <- tns[cidx.A, cidx.B] + cohortsize
-    
-    y <- c(y,cres)
-    combos <- c(combos,rep(a[cidx.A, cidx.B],cohortsize))
-    dose1 <- c(dose1,rep(cidx.A,cohortsize))
-    dose2 <- c(dose2,rep(cidx.B,cohortsize))
-    toxicity1 <- c(toxicity1, cres)
-    
-    cy <- tys[cidx.A, cidx.B]
-    cn <- tns[cidx.A, cidx.B]
-    
-    add.args <- c(list(y=cy, n=cn, tys=tys, tns=tns, cidx.A=cidx.A, cidx.B=cidx.B), add.args)
-    
-    
-    if (tover.doses[1,1] == 1){
-      earlystop <- 1
-      break()
-    }
-    
-    if (cidx.A!=1 & cidx.B!=1 & cidx.A!=ndose.A & cidx.B!=ndose.B){
-      # no boundary
-      cys <- tys[(cidx.A-1):(cidx.A+1), (cidx.B-1):(cidx.B+1)]
-      cns <- tns[(cidx.A-1):(cidx.A+1), (cidx.B-1):(cidx.B+1)]
-      cover.doses <- tover.doses[(cidx.A-1):(cidx.A+1), (cidx.B-1):(cidx.B+1)]
-    } else if (cidx.A==1 & cidx.B==1){
-      # (1, 1)
-      cys <- rbind(c(NA,NA,NA),cbind(c(NA,NA),tys[1:2,1:2]))
-      cns <- rbind(c(NA,NA,NA),cbind(c(NA,NA),tns[1:2,1:2]))
-      cover.doses <- rbind(c(NA,NA,NA),cbind(c(NA,NA),tover.doses[1:2,1:2]))
-    } else if (cidx.A==ndose.A & cidx.B==ndose.B){
-      # (nA, nB)
-      cys <- rbind(cbind(tys[(cidx.A-1):cidx.A,(cidx.B-1):cidx.B],c(NA,NA)), c(NA,NA,NA))
-      cns <- rbind(cbind(tns[(cidx.A-1):cidx.A,(cidx.B-1):cidx.B],c(NA,NA)), c(NA,NA,NA))
-      cover.doses <- rbind(cbind(tover.doses[(cidx.A-1):cidx.A,(cidx.B-1):cidx.B],c(NA,NA)), c(NA,NA,NA))
-    } else if (cidx.A==1 & cidx.B==ndose.B){
-      # (1, nB) 
-      cys <- rbind(c(NA,NA,NA),cbind(tys[1:2,(cidx.B-1):cidx.B],c(NA,NA)))
-      cns <- rbind(c(NA,NA,NA),cbind(tns[1:2,(cidx.B-1):cidx.B],c(NA,NA)))
-      cover.doses <- rbind(c(NA,NA,NA),cbind(tover.doses[1:2,(cidx.B-1):cidx.B],c(NA,NA)))
-    } else if (cidx.A==ndose.A & cidx.B==1){
-      # (nA, 1) 
-      cys <- rbind(cbind(c(NA,NA), tys[(cidx.A-1):cidx.A,1:2]),c(NA,NA,NA))
-      cns <- rbind(cbind(c(NA,NA), tns[(cidx.A-1):cidx.A,1:2]),c(NA,NA,NA))
-      cover.doses <- rbind(cbind(c(NA,NA), tover.doses[(cidx.A-1):cidx.A,1:2]),c(NA,NA,NA))
-    } else if (cidx.A==1 & cidx.B!=1){
-      # (1, 2:(nB-1))
-      cys <- rbind(c(NA,NA,NA), tys[1:2, (cidx.B-1):(cidx.B+1)])
-      cns <- rbind(c(NA,NA,NA), tns[1:2, (cidx.B-1):(cidx.B+1)])
-      cover.doses <- rbind(c(NA,NA,NA), tover.doses[1:2, (cidx.B-1):(cidx.B+1)])
-    } else if (cidx.A!=1 & cidx.B==1){
-      # (2:(nA-1), 1)
-      cys <- cbind(c(NA,NA,NA), tys[(cidx.A-1):(cidx.A+1), 1:2])
-      cns <- cbind(c(NA,NA,NA), tns[(cidx.A-1):(cidx.A+1), 1:2])
-      cover.doses <- cbind(c(NA,NA,NA), tover.doses[(cidx.A-1):(cidx.A+1), 1:2])
-    } else if (cidx.A==ndose.A & cidx.B!=ndose.B){
-      # (nA, 2:(nB-1))
-      cys <- rbind(tys[(ndose.A-1):ndose.A, (cidx.B-1):(cidx.B+1)], c(NA,NA,NA))
-      cns <- rbind(tns[(ndose.A-1):ndose.A, (cidx.B-1):(cidx.B+1)], c(NA,NA,NA))
-      cover.doses <- rbind(tover.doses[(ndose.A-1):ndose.A, (cidx.B-1):(cidx.B+1)], c(NA,NA,NA))
-    } else if (cidx.A!=ndose.A & cidx.B==ndose.B){
-      # (2:(nA-1), nB)
-      cys <- cbind(tys[(cidx.A-1):(cidx.A+1), (cidx.B-1):cidx.B], c(NA,NA,NA))
-      cns <- cbind(tns[(cidx.A-1):(cidx.A+1), (cidx.B-1):cidx.B], c(NA,NA,NA))
-      cover.doses <- cbind(tover.doses[(cidx.A-1):(cidx.A+1), (cidx.B-1):cidx.B], c(NA,NA,NA))
-    } else {
-      message('no such case')
-    }
-    
-    ###################
-    idx.CFO <- make.decision.2dCFO.fn(phi, cys, cns, add.args$alp.prior, add.args$bet.prior, cover.doses)
-    idx.BOIN <- next.comb(phi, tns, tys, c(cidx.A, cidx.B))$next_dc - c(cidx.A, cidx.B)
-    idx.dfcomb <- CombIncrease_next(ndose.A, ndose.B, phi, target_min=0.2, target_max=0.4, prior_tox_a1, prior_tox_a2, cohortsize, 
-                                    final=FALSE, pat_incl=sum(tns), dose_adm1=dose1, dose_adm2=dose2, toxicity=toxicity1, c_over=1, 
-                                    cmin_overunder=3, cmin_recom=1, early_stop=1, alloc_rule=1)
-    idx.dfcomb <- c(idx.dfcomb$cdose1 - cidx.A, idx.dfcomb$cdose2 - cidx.B)
-    idx.pocrm <- which(a==pocrm.imp(alpha,prior.o,phi,y,combos)$dose.rec, arr.ind = TRUE) - c(cidx.A, cidx.B)
-    
-    A.idx <- c(idx.CFO[1],idx.BOIN[1],idx.dfcomb[1],idx.pocrm[1])
-    B.idx <- c(idx.CFO[2],idx.BOIN[2],idx.dfcomb[2],idx.pocrm[2])
-    
-    cidx.A <- cidx.A + getmode(A.idx)
-    cidx.B <- cidx.B + getmode(B.idx)
-  }
-  
-  
-  if (earlystop==0){
-    MTD <- select.mtd.comb(phi, tns, tys)$MTD
-  }else{
-    MTD <- c(99,99)
-  }
-  
-  correct <- 0
-  if(MTD[1]>ndose.A | MTD[2]>ndose.B){
-    correct <- 0
-  } else if (p.true[MTD[1],MTD[2]]==phi){
-    correct <- 1
-  }
-  
-  npercent <- 0
-  for (j in 1:ndose.A) {
-    for (k in 1:ndose.B) {
-      if (p.true[j,k]==phi){
-        npercent <- npercent + tns[j,k]
+  ptoxic <- 0
+  for (j in 1:ndose_a1) {
+    for (k in 1:ndose_a2) {
+      if (p_tox[j,k]>target){
+        ptoxic <- ptoxic + res$n_pat_dose[j,k]
       }
     }
   }
-  npercent <- percent(npercent/(ncohort*cohortsize))
-  list(MTD=MTD, dose.ns=tns, DLT.ns=tys, p.true=p.true, target=phi, over.doses=tover.doses, correct=correct, npercent=npercent, ntox=sum(tys))
+  ptoxic <- ptoxic/(n_cohort*cohort)
+  
+  list(correct=correct, npercent=npercent, ntox=sum(res$n_tox_dose), ptoxic=ptoxic)
 }
+
+
+
 
 ######### Random scenario
 rand <- function(dim1,dim2,nMTD,e){

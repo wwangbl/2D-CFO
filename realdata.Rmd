@@ -1,0 +1,27 @@
+
+```{r}
+library(dfcomb)
+source("2D_CFO_MTD.R")
+library(ggplot2)
+```
+
+
+```{r}
+p <- list()
+p[[1]] <- c(0.04, 0.05, 0.07, 0.10)
+p[[2]] <- c(0.08, 0.10, 0.17, 0.22)
+p[[3]] <- c(0.14, 0.19, 0.33, 0.55)
+p[[4]] <- c(0.24, 0.33, 0.56, 0.77)
+p <- rbind(p[[1]],p[[2]],p[[3]],p[[4]])
+```
+
+```{r}
+CFO.simu.fn(0.33, p, prelim=0, ncohort=20, cohortsize=3, init.level.A=1, init.level.B=1, add.args=add.args, seed=1)
+```
+
+
+
+
+
+
+
